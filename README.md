@@ -91,7 +91,7 @@ One of OfflineBridge's core features is diagnosing and documenting offline compa
 ```mermaid
 graph TB
     subgraph Isolated_Lab_LAN ["Air-Gapped Lab Subnet (192.168.1.0/24)"]
-        MasterPC["🖥️ Master PC (OfflineBridge Controller)<br/>IP: 192.168.1.1:8000<br/>Laravel + SQLite + Local CSS"]
+        MasterPC["🖥️ Master PC (OfflineBridge Controller)<br/>IP: 192.168.1.1:8000<br/>Laravel + MySQL + Local CSS"]
         
         Switch["🔀 Lab Gigabit Switch / AP"]
         
@@ -117,7 +117,7 @@ graph TB
 ## 🛠️ Tech Stack
 
 - **Backend**: [PHP 8.2+](https://www.php.net/) with [Laravel 12.x](https://laravel.com)
-- **Database**: [SQLite](https://www.sqlite.org/) (lightweight, zero-config, portable single-file database) or MySQL
+- **Database**: [MySQL](https://www.mysql.com/) (local server; SQLite remains available for testing)
 - **Frontend**: Blade Templating + **Zero-Dependency Vanilla CSS** (`public/css/app.css`)
   - No external CDNs or Google Fonts dependencies (guarantees instantaneous rendering on networks with no internet)
   - Native SVG iconography
@@ -129,7 +129,8 @@ graph TB
 ## ⚡ Installation & Quick Start
 
 ### Prerequisites
-- **PHP** >= 8.2 (with `pdo_sqlite`, `mbstring`, `openssl`, `curl` extensions enabled)
+- **PHP** >= 8.2 (with `pdo_mysql`, `mbstring`, `openssl`, `curl` extensions enabled)
+- **MySQL** 8.0+ or MariaDB, running locally or on your LAN
 - **Composer** (v2.x)
 - **Git**
 
@@ -152,16 +153,19 @@ graph TB
    php artisan key:generate
    ```
 
-4. **Initialize Local Database**:
+4. **Create the MySQL database**:
+   Start MySQL (for example, in XAMPP), then create a database named `offline_bridge` using phpMyAdmin or the MySQL command line:
    ```bash
-   # Ensure SQLite database file exists
-   touch database/database.sqlite
+   mysql -u root -p -e "CREATE DATABASE offline_bridge CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   ```
+   Update `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` in `.env` if your MySQL settings differ from the defaults.
 
-   # Run migrations
+5. **Initialize the database**:
+   ```bash
    php artisan migrate
    ```
 
-5. **Start the Master Controller Server**:
+6. **Start the Master Controller Server**:
    ```bash
    # Run on localhost
    php artisan serve --port=8000
@@ -170,7 +174,7 @@ graph TB
    php artisan serve --host=0.0.0.0 --port=8000
    ```
 
-6. **Access OfflineBridge**:
+7. **Access OfflineBridge**:
    - On the Master PC: `http://127.0.0.1:8000`
    - On Student Workstations: `http://<MASTER_PC_LAN_IP>:8000` (e.g., `http://192.168.1.1:8000`)
 
@@ -202,7 +206,6 @@ Offline_Bridge/
 │   └── Services/
 │       └── MockDataService.php        # Telemetry, clients, and feasibility datasets
 ├── database/
-│   ├── database.sqlite                # Portable local database
 │   └── migrations/                    # Database schema migrations
 ├── public/
 │   ├── css/
@@ -242,7 +245,12 @@ In [`.env`](file:///.env), ensure the application is configured to run fully iso
 ```ini
 APP_ENV=local
 APP_DEBUG=false
-DB_CONNECTION=sqlite
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=offline_bridge
+DB_USERNAME=root
+DB_PASSWORD=
 SESSION_DRIVER=database
 CACHE_STORE=database
 QUEUE_CONNECTION=database
