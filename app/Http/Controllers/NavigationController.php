@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\MockDataService;
+use App\Models\ActivityLog;
 
 class NavigationController extends Controller
 {
@@ -12,12 +13,17 @@ class NavigationController extends Controller
      */
     public function dashboard()
     {
+        $activities = ActivityLog::recent(10)->get();
+        if ($activities->isEmpty()) {
+            $activities = collect(MockDataService::getActivities());
+        }
+
         return view('dashboard', [
             'systemStatus' => MockDataService::getSystemStatus(),
             'stats' => MockDataService::getStats(),
             'applications' => MockDataService::getApplications(),
             'clients' => MockDataService::getConnectedClients(),
-            'activities' => MockDataService::getActivities(),
+            'activities' => $activities,
             'chartData' => MockDataService::getChartData(),
             'network' => MockDataService::getNetworkDetails(),
         ]);
@@ -67,8 +73,13 @@ class NavigationController extends Controller
      */
     public function activities()
     {
+        $activities = ActivityLog::recent(50)->get();
+        if ($activities->isEmpty()) {
+            $activities = collect(MockDataService::getActivities());
+        }
+
         return view('pages.activities', [
-            'activities' => MockDataService::getActivities()
+            'activities' => $activities
         ]);
     }
 

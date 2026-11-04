@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('client_ip');
             $table->string('action');
             $table->text('details')->nullable();
+            $table->string('status')->default('info');
+            $table->string('user_agent')->nullable();
             $table->timestamps();
         });
     }

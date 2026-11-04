@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\LabTask;
 use App\Models\ActivityLog;
+use App\Services\ActivityLogger;
 
 class LabTaskController extends Controller
 {
@@ -50,11 +51,7 @@ class LabTaskController extends Controller
         ]);
 
         // Audit Trail Activity Log
-        ActivityLog::create([
-            'client_ip' => $request->ip() ?: '127.0.0.1',
-            'action' => 'Lab Task Uploaded',
-            'details' => "Task: {$task->title} ({$task->file_name})",
-        ]);
+        ActivityLogger::log('Lab Task Uploaded', "Task: {$task->title} ({$task->file_name})", 'success', $request);
 
         return redirect()->route('labs.index')->with('success', "Lab Task '{$task->title}' uploaded successfully.");
     }
@@ -70,11 +67,7 @@ class LabTaskController extends Controller
             abort(404, 'The requested lab file does not exist on Master storage.');
         }
 
-        ActivityLog::create([
-            'client_ip' => $request->ip() ?: '127.0.0.1',
-            'action' => 'Lab Task Downloaded',
-            'details' => "File: {$task->file_name}",
-        ]);
+        ActivityLogger::log('Lab Task Downloaded', "File: {$task->file_name} for {$task->title}", 'info', $request);
 
         return Storage::disk('public')->download($task->file_path, $task->file_name);
     }
@@ -95,11 +88,7 @@ class LabTaskController extends Controller
         $fileName = $task->file_name;
         $task->delete();
 
-        ActivityLog::create([
-            'client_ip' => request()->ip() ?: '127.0.0.1',
-            'action' => 'Lab Task Deleted',
-            'details' => "Deleted Task: {$title} ({$fileName})",
-        ]);
+        ActivityLogger::log('Lab Task Deleted', "Deleted Task: {$title} ({$fileName})", 'warning', request());
 
         return redirect()->route('labs.index')->with('success', "Lab task '{$title}' deleted successfully.");
     }

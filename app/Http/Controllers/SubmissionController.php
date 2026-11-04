@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Submission;
-use App\Models\ActivityLog;
+use App\Services\ActivityLogger;
 
 class SubmissionController extends Controller
 {
@@ -40,11 +40,12 @@ class SubmissionController extends Controller
             'file_path' => $filePath,
         ]);
 
-        ActivityLog::create([
-            'client_ip' => $request->ip(),
-            'action' => 'Solution Submitted',
-            'details' => "Student {$validated['student_name']} ({$validated['student_id']}) submitted for task #{$validated['lab_task_id']}",
-        ]);
+        ActivityLogger::log(
+            'Solution Submitted',
+            "Student {$validated['student_name']} ({$validated['student_id']}) submitted for task #{$validated['lab_task_id']}",
+            'success',
+            $request
+        );
 
         return back()->with('success', 'Lab solution submitted successfully.');
     }

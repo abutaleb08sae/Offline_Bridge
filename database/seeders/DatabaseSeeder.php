@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ApplicationSeeder::class,
+            ActivityLogSeeder::class,
         ]);
     }
 }

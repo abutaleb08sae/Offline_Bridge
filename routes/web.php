@@ -37,3 +37,31 @@ Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.d
 |--------------------------------------------------------------------------
 */
 Route::post('/submissions/submit', [SubmissionController::class, 'store'])->name('submissions.store');
+
+/*
+|--------------------------------------------------------------------------
+| Live Activity Logs API Route (Offline LAN Polling - Zero WebSockets)
+|--------------------------------------------------------------------------
+*/
+Route::get('/api/activities/stream', function (\Illuminate\Http\Request $request) {
+    $limit = min((int) $request->query('limit', 15), 50);
+    $logs = \App\Models\ActivityLog::recent($limit)->get();
+
+    return response()->json([
+        'latest_id' => \App\Models\ActivityLog::max('id') ?? 0,
+        'count' => $logs->count(),
+        'activities' => $logs->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'client_ip' => $log->client_ip,
+                'action' => $log->action,
+                'details' => $log->details,
+                'status' => $log->status,
+                'category' => $log->category,
+                'icon' => $log->icon,
+                'time' => $log->formatted_time,
+                'date' => $log->created_at ? $log->created_at->format('M d, Y h:i A') : '',
+            ];
+        }),
+    ]);
+})->name('activities.stream');
