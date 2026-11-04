@@ -196,9 +196,14 @@
                                         {{ $task->title }}
                                     </div>
                                     @if($task->description)
-                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.35; max-width: 400px;">
+                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.35; max-width: 400px; margin-bottom: 0.25rem;">
                                             {{ $task->description }}
                                         </div>
+                                    @endif
+                                    @if(isset($task->submissions_count) && $task->submissions_count > 0)
+                                        <span class="badge badge-success" style="font-size: 0.65rem;">
+                                            {{ $task->submissions_count }} {{ \Illuminate\Support\Str::plural('Submission', $task->submissions_count) }}
+                                        </span>
                                     @endif
                                 </td>
                                 <td>
@@ -235,7 +240,7 @@
                                         </a>
 
                                         <!-- Delete Button Form -->
-                                        <form action="{{ route('labs.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($task->title) }}\'?\n\nThis will remove the file from Master storage.');" style="display: inline;">
+                                        <form action="{{ route('labs.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($task->title) }}\'?\n\n@if(isset($task->submissions_count) && $task->submissions_count > 0)WARNING: This task has {{ $task->submissions_count }} student submission(s) which will also be removed from storage!\n\n@endif This will remove the file from Master storage.');" style="display: inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.55rem; font-size: var(--font-size-xs); display: inline-flex; align-items: center; gap: 0.25rem;" title="Delete Task">

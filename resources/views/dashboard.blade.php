@@ -197,20 +197,20 @@
 
             <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                 <!-- Add User -->
-                <button class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4);">
+                <a href="{{ route('users.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.105a6.375 6.375 0 0112.75 0v.105" />
                     </svg>
                     <span>Add New Student / User</span>
-                </button>
+                </a>
 
                 <!-- Register Application -->
-                <button class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4);">
+                <a href="{{ route('applications.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--color-info-text);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>Register Application Package</span>
-                </button>
+                </a>
 
                 <!-- Upload File -->
                 <a href="{{ route('labs.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
@@ -221,12 +221,12 @@
                 </a>
 
                 <!-- Create Backup -->
-                <button class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4);">
+                <a href="{{ route('backup.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--color-warning-text);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
                     </svg>
                     <span>Create Offline DB Backup</span>
-                </button>
+                </a>
             </div>
         </div>
     </div>

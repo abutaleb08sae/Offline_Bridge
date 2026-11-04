@@ -17,7 +17,7 @@ class TrackClientActivity
     {
         $response = $next($request);
 
-        // Filter out background polling, API checks, and asset requests
+        // Filter out background polling, API checks, downloads, and asset requests
         $path = $request->path();
         if (
             $request->is('api/*') ||
@@ -25,6 +25,8 @@ class TrackClientActivity
             $request->is('css/*') ||
             $request->is('js/*') ||
             $request->is('up') ||
+            $request->is('*/download') ||
+            $request->is('*/*/download') ||
             $path === 'favicon.ico' ||
             $request->ajax()
         ) {
@@ -33,20 +35,18 @@ class TrackClientActivity
 
         // Only log GET requests to main page views to avoid duplicate logs on POST actions
         if ($request->isMethod('GET')) {
-            $clientIp = $request->ip() ?? '127.0.0.1';
+            $clientIp = $request->ip() ?: '127.0.0.1';
             $sessionKey = 'tracked_client_' . md5($clientIp . '_' . $path);
 
             // Throttle duplicate page hit logs for the same IP + Path to once every 3 minutes
             if (!Cache::has($sessionKey)) {
                 Cache::put($sessionKey, true, now()->addMinutes(3));
 
-                $isLanClient = str_starts_with($clientIp, '192.168.') ||
-                               str_starts_with($clientIp, '10.') ||
-                               str_starts_with($clientIp, '172.') ||
-                               $clientIp !== '127.0.0.1';
+                $isLocalhost = in_array($clientIp, ['127.0.0.1', '::1', 'localhost'], true);
+                $isLanClient = !$isLocalhost;
 
                 $action = $isLanClient ? 'Client Connected' : 'Workstation Navigation';
-                $details = "LAN client accessed /{$path}";
+                $details = $isLanClient ? "LAN client accessed /{$path}" : "Master host accessed /{$path}";
 
                 ActivityLogger::log($action, $details, 'info', $request);
             }

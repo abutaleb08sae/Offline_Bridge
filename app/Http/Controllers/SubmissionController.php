@@ -38,7 +38,9 @@ class SubmissionController extends Controller
 
         $file = $request->file('submission_file');
         $originalName = $file->getClientOriginalName();
-        $fileName = time() . '_' . $request->student_id . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $originalName);
+        $cleanStudentId = preg_replace('/[^a-zA-Z0-9_-]/', '', $request->student_id) ?: 'student';
+        $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $originalName) ?: 'solution.pkt';
+        $fileName = time() . '_' . $cleanStudentId . '_' . $cleanName;
 
         // Store file in storage/app/public/submissions/
         $filePath = $file->storeAs('submissions', $fileName, 'public');

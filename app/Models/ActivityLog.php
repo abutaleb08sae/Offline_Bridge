@@ -57,7 +57,7 @@ class ActivityLog extends Model
      */
     public function getCategoryAttribute(): string
     {
-        $action = strtolower($this->action);
+        $action = strtolower((string) $this->action);
         if (str_contains($action, 'task') || str_contains($action, 'file') || str_contains($action, 'solution')) {
             return 'Files';
         }
@@ -75,7 +75,7 @@ class ActivityLog extends Model
      */
     public function getIconAttribute(): string
     {
-        $action = strtolower($this->action);
+        $action = strtolower((string) $this->action);
         if (str_contains($action, 'user') || str_contains($action, 'client') || str_contains($action, 'connected')) {
             return 'user';
         }

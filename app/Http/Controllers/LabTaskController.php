@@ -11,11 +11,11 @@ use App\Services\ActivityLogger;
 class LabTaskController extends Controller
 {
     /**
-     * Display a listing of all lab tasks.
+     * Display a listing of all lab tasks with submission count.
      */
     public function index()
     {
-        $labTasks = LabTask::latest()->get();
+        $labTasks = LabTask::withCount('submissions')->latest()->get();
 
         return view('pages.files', compact('labTasks'));
     }
@@ -36,7 +36,8 @@ class LabTaskController extends Controller
 
         $file = $request->file('lab_file');
         $originalName = $file->getClientOriginalName();
-        $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $originalName);
+        $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $originalName) ?: 'lab_task_' . time() . '.pkt';
+        $safeName = time() . '_' . $cleanName;
 
         // Store file in storage/app/public/labs/
         $filePath = $file->storeAs('labs', $safeName, 'public');
@@ -73,13 +74,20 @@ class LabTaskController extends Controller
     }
 
     /**
-     * Delete the lab task from database and storage.
+     * Delete the lab task and all associated files from database and storage.
      */
     public function destroy($id)
     {
-        $task = LabTask::findOrFail($id);
+        $task = LabTask::with('submissions')->findOrFail($id);
 
-        // Delete physical file from public disk
+        // Delete associated student submission files from public disk to prevent orphan storage leaks
+        foreach ($task->submissions as $submission) {
+            if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
+                Storage::disk('public')->delete($submission->file_path);
+            }
+        }
+
+        // Delete physical task file from public disk
         if (Storage::disk('public')->exists($task->file_path)) {
             Storage::disk('public')->delete($task->file_path);
         }

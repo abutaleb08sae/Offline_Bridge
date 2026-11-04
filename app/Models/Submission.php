@@ -24,7 +24,10 @@ class Submission extends Model
      */
     public function labTask(): BelongsTo
     {
-        return $this->belongsTo(LabTask::class);
+        return $this->belongsTo(LabTask::class)->withDefault([
+            'title' => 'Archived Task',
+            'file_name' => 'N/A',
+        ]);
     }
 
     /**
