@@ -33,10 +33,14 @@ Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.d
 
 /*
 |--------------------------------------------------------------------------
-| Student Submissions Routes
+| Student Submissions & Instructor Evaluation Routes
 |--------------------------------------------------------------------------
 */
-Route::post('/submissions/submit', [SubmissionController::class, 'store'])->name('submissions.store');
+Route::get('/submit', [SubmissionController::class, 'create'])->name('submissions.create');
+Route::post('/submit', [SubmissionController::class, 'store'])->name('submissions.store');
+Route::post('/submissions/submit', [SubmissionController::class, 'store']);
+Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');
 
 /*
 |--------------------------------------------------------------------------
