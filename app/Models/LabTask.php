@@ -25,5 +25,19 @@ class LabTask extends Model
     {
         return $this->hasMany(Submission::class);
     }
+
+    /**
+     * Human-readable formatted file size (e.g. 1.25 MB, 450 KB).
+     */
+    public function getFormattedFileSizeAttribute(): string
+    {
+        $bytes = (int) $this->file_size;
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' B';
+    }
 }
 

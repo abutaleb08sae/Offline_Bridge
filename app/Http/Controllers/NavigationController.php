@@ -55,13 +55,11 @@ class NavigationController extends Controller
     }
 
     /**
-     * Files Management Page.
+     * Files Management Page (Redirects to Lab Tasks).
      */
     public function files()
     {
-        return view('pages.files', [
-            'files' => MockDataService::getFilesList()
-        ]);
+        return redirect()->route('labs.index');
     }
 
     /**

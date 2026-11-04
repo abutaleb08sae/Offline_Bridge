@@ -14,7 +14,7 @@
                 <p class="card-subtitle">Manage student accounts, instructor credentials, and access roles</p>
             </div>
             <button class="btn btn-primary" onclick="openModal('addUserModal')">
-                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Add New User</span>
             </button>
         </div>
@@ -22,7 +22,7 @@
         <div style="margin-top: var(--space-4);" class="filter-bar">
             <!-- Search Box -->
             <div class="search-input-wrapper">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                 <input type="text" id="userSearchInput" class="form-input" placeholder="Search user by name or email..." onkeyup="filterUsersTable()">
             </div>
 
@@ -97,7 +97,7 @@
         <div class="modal-header">
             <h3 class="modal-title">Add New User</h3>
             <button class="modal-close-btn" onclick="closeModal('addUserModal')" aria-label="Close modal">
-                <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
         <form onsubmit="event.preventDefault(); closeModal('addUserModal'); showToast('User Created', 'New user added successfully (Mock Data Demo)', 'success');">

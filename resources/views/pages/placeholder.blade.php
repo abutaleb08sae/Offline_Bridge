@@ -7,8 +7,8 @@
 
     <div class="coming-soon-card">
         <div class="coming-soon-icon">
-            <svg style="width: 32px; height: 32px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 01-3.586 0 2.548 2.548 0 010-3.586l5.653-4.655m3.116-2.023a4.5 4.5 0 10-6.364-6.364 4.5 4.5 0 006.364 6.364zm0 0l2.122-2.122" />
+            <svg xmlns="http://www.w3.org/2000/svg" style="width: 32px; height: 32px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 01-3.586 0 2.548 2.548 0 010-3.586l5.653-4.655m3.116-2.023a4.5 4.5 0 10-6.364-6.364 4.5 4.5 0 006.364 6.364zm0 0l2.122-2.122" />
             </svg>
         </div>
         <h2 class="coming-soon-title">{{ $title }}</h2>

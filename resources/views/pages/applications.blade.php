@@ -9,7 +9,7 @@
     <!-- Notice Banner -->
     <div class="card" style="background-color: var(--color-warning-bg); border-color: rgba(245, 158, 11, 0.3);">
         <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
-            <svg style="width:24px;height:24px;color:var(--color-warning-text);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;color:var(--color-warning-text);flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
             </svg>
             <div>
@@ -31,7 +31,7 @@
                 <p class="card-subtitle">Local lab software packages available across client PCs</p>
             </div>
             <button class="btn btn-primary" onclick="openModal('registerAppModal')">
-                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                 <span>Register New Application</span>
             </button>
         </div>
@@ -149,7 +149,7 @@
         <div class="modal-header">
             <h3 class="modal-title">Register New Application Package</h3>
             <button class="modal-close-btn" onclick="closeModal('registerAppModal')" aria-label="Close modal">
-                <svg style="width:20px;height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
         <form onsubmit="event.preventDefault(); closeModal('registerAppModal'); showToast('Application Registered', 'Software package registered in Master DB (UI Demo)', 'success');">

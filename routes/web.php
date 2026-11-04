@@ -15,7 +15,7 @@ Route::get('/', [NavigationController::class, 'dashboard'])->name('dashboard');
 Route::get('/users', [NavigationController::class, 'users'])->name('users.index');
 Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
 Route::get('/applications', [NavigationController::class, 'applications'])->name('applications.index');
-Route::get('/files', [NavigationController::class, 'files'])->name('files.index');
+Route::get('/files', [LabTaskController::class, 'index'])->name('files.index');
 Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
 Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
 Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
@@ -23,11 +23,13 @@ Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.ind
 
 /*
 |--------------------------------------------------------------------------
-| Lab Tasks & Local File Distribution Routes
+| Lab Tasks & Local File Distribution Routes (.pkt Support)
 |--------------------------------------------------------------------------
 */
+Route::get('/labs', [LabTaskController::class, 'index'])->name('labs.index');
 Route::post('/labs/upload', [LabTaskController::class, 'store'])->name('labs.store');
 Route::get('/labs/{id}/download', [LabTaskController::class, 'download'])->name('labs.download');
+Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.destroy');
 
 /*
 |--------------------------------------------------------------------------
