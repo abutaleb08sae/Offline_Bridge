@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NavigationController;
+use App\Http\Controllers\LabTaskController;
+use App\Http\Controllers\SubmissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,3 +20,18 @@ Route::get('/activities', [NavigationController::class, 'activities'])->name('ac
 Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
 Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
 Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.index');
+
+/*
+|--------------------------------------------------------------------------
+| Lab Tasks & Local File Distribution Routes
+|--------------------------------------------------------------------------
+*/
+Route::post('/labs/upload', [LabTaskController::class, 'store'])->name('labs.store');
+Route::get('/labs/{id}/download', [LabTaskController::class, 'download'])->name('labs.download');
+
+/*
+|--------------------------------------------------------------------------
+| Student Submissions Routes
+|--------------------------------------------------------------------------
+*/
+Route::post('/submissions/submit', [SubmissionController::class, 'store'])->name('submissions.store');
