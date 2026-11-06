@@ -48,23 +48,20 @@ class LocalJudgeRunner
 
         $runnerPath = config('judge.vm_runner');
 
-        // Check if an external VM runner is validly configured
         $hasValidVmRunner = is_string($runnerPath)
             && $runnerPath !== ''
             && (str_starts_with($runnerPath, '\\\\') || preg_match('/^[A-Za-z]:\\\\/', $runnerPath) === 1)
             && is_file($runnerPath);
 
-        // If VM runner is present, use external VM execution; otherwise, use Local Native execution.
         if ($hasValidVmRunner) {
             return $this->executeWithVmRunner($runnerPath, $language, $problem, $testCases, $code);
         }
 
-        // Native Local Windows Driver Execution (XAMPP / Direct MinGW g++ / Python)
         return $this->executeNatively($language, $problem, $testCases, $code);
     }
 
     /**
-     * Executes student code using native local g++ / python on the Master PC.
+     * Native Windows execution fallback logic for Master PC.
      */
     private function executeNatively(
         string $language,
@@ -72,62 +69,77 @@ class LocalJudgeRunner
         Collection $testCases,
         string $code
     ): array {
-        $tempDir = storage_path('app/temp_judge/');
+        $tempDir = storage_path('app/temp_judge');
         if (!file_exists($tempDir)) {
             mkdir($tempDir, 0777, true);
         }
 
-        $uniqueId = uniqid('sub_', true);
+        $tempDirReal = realpath($tempDir) ?: $tempDir;
+        $uniqueId = 'sub_' . time() . '_' . rand(1000, 9999);
         $lang = strtolower($language);
-        $sourcePath = $tempDir . $uniqueId . ($lang === 'cpp' ? '.cpp' : '.py');
-        $exePath = $tempDir . $uniqueId . '.exe';
+        
+        $sourcePath = $tempDirReal . DIRECTORY_SEPARATOR . $uniqueId . ($lang === 'cpp' ? '.cpp' : '.py');
+        $exePath = $tempDirReal . DIRECTORY_SEPARATOR . $uniqueId . '.exe';
 
         file_put_contents($sourcePath, $code);
 
-        try {
-            // 1. C++ Compilation
-            if ($lang === 'cpp') {
-                $compileCmd = "g++ \"{$sourcePath}\" -o \"{$exePath}\" 2>&1";
-                exec($compileCmd, $compileOutput, $compileResult);
+        // Override environment variables to force g++ and process runners to use local temp directory
+        $envVars = [
+            'TMP' => $tempDirReal,
+            'TEMP' => $tempDirReal,
+            'TMPDIR' => $tempDirReal,
+            'SYSTEMROOT' => getenv('SystemRoot') ?: 'C:\\Windows',
+            'PATH' => getenv('PATH'),
+        ];
 
-                if ($compileResult !== 0) {
+        try {
+            // 1. C++ Compilation Stage
+            if ($lang === 'cpp') {
+                $compileProcess = new Process(['g++', $sourcePath, '-o', $exePath], $tempDirReal, $envVars);
+                $compileProcess->run();
+
+                if (!$compileProcess->isSuccessful()) {
                     return [
                         'verdict' => 'Compilation Error',
-                        'details' => implode("\n", $compileOutput),
+                        'details' => $compileProcess->getErrorOutput() ?: $compileProcess->getOutput(),
                     ];
                 }
             }
 
             $timeLimit = max(1, (int) $problem->time_limit);
 
-            // 2. Test Cases Execution Loop
+            // 2. Test Execution Loop
             foreach ($testCases as $index => $testCase) {
                 if ($lang === 'cpp') {
-                    $process = new Process([$exePath]);
+                    $process = new Process([$exePath], $tempDirReal, $envVars);
                 } else {
-                    $process = new Process(['python', $sourcePath]);
+                    $process = new Process(['python', $sourcePath], $tempDirReal, $envVars);
                 }
 
-                $process->setInput($testCase->input ?? '');
+                $process->setInput((string) ($testCase->input ?? ''));
                 $process->setTimeout((float) $timeLimit);
 
                 try {
                     $process->run();
 
                     if (!$process->isSuccessful()) {
+                        $errOut = trim($process->getErrorOutput());
+                        $stdOut = trim($process->getOutput());
+                        $exitCode = $process->getExitCode();
+
                         return [
                             'verdict' => 'Runtime Error',
-                            'details' => mb_substr($process->getErrorOutput(), 0, 8000),
+                            'details' => "Exit Code: {$exitCode}\nLog: " . ($errOut ?: ($stdOut ?: 'Unknown execution crash.')),
                         ];
                     }
 
                     $actualOutput = trim(str_replace("\r\n", "\n", $process->getOutput()));
-                    $expectedOutput = trim(str_replace("\r\n", "\n", $testCase->expected_output ?? ''));
+                    $expectedOutput = trim(str_replace("\r\n", "\n", (string) ($testCase->expected_output ?? '')));
 
                     if ($actualOutput !== $expectedOutput) {
                         return [
                             'verdict' => 'Wrong Answer',
-                            'details' => "Failed on test case #" . ($index + 1) . "\nExpected:\n{$expectedOutput}\n\nGot:\n{$actualOutput}",
+                            'details' => "Failed on Test Case #" . ($index + 1) . "\nExpected:\n{$expectedOutput}\n\nGot:\n{$actualOutput}",
                         ];
                     }
                 } catch (ProcessTimedOutException) {
@@ -138,7 +150,7 @@ class LocalJudgeRunner
                 } catch (Throwable $e) {
                     return [
                         'verdict' => 'Runtime Error',
-                        'details' => $e->getMessage(),
+                        'details' => 'Execution Exception: ' . $e->getMessage(),
                     ];
                 }
             }
@@ -148,7 +160,7 @@ class LocalJudgeRunner
                 'details' => 'All test cases passed successfully.',
             ];
         } finally {
-            // Cleanup Temp Files
+            // Cleanup Temporary Files
             if (file_exists($sourcePath)) {
                 @unlink($sourcePath);
             }
@@ -159,7 +171,7 @@ class LocalJudgeRunner
     }
 
     /**
-     * Original external VM Runner Handler.
+     * External VM Runner Handler.
      */
     private function executeWithVmRunner(
         string $runnerPath,
