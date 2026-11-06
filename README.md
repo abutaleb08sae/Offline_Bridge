@@ -193,6 +193,27 @@ graph TB
 | `/logs` | `logs.index` | System diagnostic logs and connection events. |
 | `/settings` | `settings.index` | Subnet configuration, air-gap toggles, and system preferences. |
 | `/backup` | `backup.index` | Local snapshot generation and database restoration. |
+| `/judge` | `judge.index` | Offline C++17 and Python 3 programming problems. |
+
+### Local Judge Setup
+
+The judge executes student code only inside Docker Linux containers; it never invokes a host compiler or interpreter. On the Master PC, build the local runner image and apply the isolated judge migrations:
+
+```powershell
+docker build -t offline-bridge/judge:latest -f docker/judge/Dockerfile .
+php artisan migrate
+```
+
+Docker must be running in Linux-container mode, and Docker Desktop must be allowed to mount the application's `storage` directory. The web-server account must also be able to access the Docker daemon. Student PCs need only access the local OfflineBridge URL; the runner image and its compiler/interpreter are local to the Master PC.
+
+Optional `.env` overrides:
+
+```ini
+JUDGE_DOCKER_BINARY=docker
+JUDGE_DOCKER_IMAGE=offline-bridge/judge:latest
+```
+
+Each run disables network access, mounts source and test input read-only, runs as a non-root UID with all Linux capabilities dropped, and limits CPU, memory, process count, execution time, and captured output. The configured problem memory limit is capped at 512 MB and its time limit at 10 seconds. Keep Docker and the host patched; containers reduce risk but are not a substitute for keeping the runner isolated from sensitive host data.
 
 ---
 

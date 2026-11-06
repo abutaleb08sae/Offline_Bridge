@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\LocalJudgeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,17 @@ Route::get('/activities', [NavigationController::class, 'activities'])->name('ac
 Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
 Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
 Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.index');
+
+/*
+|--------------------------------------------------------------------------
+| Offline Local Programming Judge
+|--------------------------------------------------------------------------
+*/
+Route::prefix('judge')->name('judge.')->group(function () {
+    Route::get('/', [LocalJudgeController::class, 'index'])->name('index');
+    Route::get('/problem/{id}', [LocalJudgeController::class, 'show'])->whereNumber('id')->name('show');
+    Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
+});
 
 /*
 |--------------------------------------------------------------------------

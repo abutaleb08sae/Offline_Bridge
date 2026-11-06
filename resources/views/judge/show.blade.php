@@ -1,0 +1,72 @@
+@extends('layouts.app')
+
+@section('title', $problem->title)
+
+@section('content')
+<div style="display: flex; flex-direction: column; gap: var(--space-4);">
+    <div>
+        <a href="{{ route('judge.index') }}" style="color: var(--primary); text-decoration: none;">&larr; All problems</a>
+    </div>
+
+    @if($errors->any())
+        <div class="card" role="alert" style="border-color: var(--color-danger-text); color: var(--color-danger-text);">
+            @foreach($errors->all() as $error)
+                <p style="margin: 0 0 var(--space-1);">{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
+
+    @if(session('judge_result'))
+        @php($result = session('judge_result'))
+        @php($verdictClass = $result['verdict'] === 'Accepted' ? 'badge-success' : (in_array($result['verdict'], ['Wrong Answer', 'Time Limit Exceeded'], true) ? 'badge-warning' : 'badge-danger'))
+        <div class="card" role="status" style="display: flex; flex-direction: column; gap: var(--space-2);">
+            <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                <strong>Submission #{{ $result['id'] }}</strong>
+                <span class="badge {{ $verdictClass }}">{{ $result['verdict'] }}</span>
+            </div>
+            @if($result['details'])
+                <pre style="white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; color: var(--text-muted);">{{ $result['details'] }}</pre>
+            @endif
+        </div>
+    @endif
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: var(--space-4); align-items: start;">
+        <section class="card" aria-labelledby="problem-title">
+            <div style="display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4);">
+                <h2 id="problem-title" style="margin: 0; color: var(--text-main);">{{ $problem->title }}</h2>
+                <span class="badge badge-neutral">{{ $problem->time_limit }} sec / {{ $problem->memory_limit }} MB</span>
+            </div>
+            <div style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main);">{{ $problem->description }}</div>
+
+            @if($sample)
+                <div style="margin-top: var(--space-5);">
+                    <h3 style="margin-bottom: var(--space-2);">Sample input</h3>
+                    <pre style="white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); background: var(--bg-body); border-radius: var(--radius-md);">{{ $sample->input }}</pre>
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);">Sample output</h3>
+                    <pre style="white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); background: var(--bg-body); border-radius: var(--radius-md);">{{ $sample->expected_output }}</pre>
+                </div>
+            @endif
+        </section>
+
+        <section class="card" aria-labelledby="submission-title">
+            <h2 id="submission-title" style="margin-top: 0;">Submit solution</h2>
+            <form method="POST" action="{{ route('judge.submit') }}" style="display: flex; flex-direction: column; gap: var(--space-3);">
+                @csrf
+                <input type="hidden" name="judge_problem_id" value="{{ $problem->id }}">
+
+                <label for="language" class="form-label">Language</label>
+                <select id="language" name="language" class="form-select" required>
+                    <option value="cpp" {{ old('language', 'cpp') === 'cpp' ? 'selected' : '' }}>C++17</option>
+                    <option value="python" {{ old('language') === 'python' ? 'selected' : '' }}>Python 3</option>
+                </select>
+
+                <label for="code" class="form-label">Source code</label>
+                <textarea id="code" name="code" class="form-textarea" rows="20" required maxlength="64000" spellcheck="false" autocapitalize="off" autocomplete="off" style="font-family: Consolas, 'Courier New', monospace; resize: vertical;">{{ old('code') }}</textarea>
+                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Maximum 64 KB. Code runs in a network-disabled, resource-limited Docker container.</p>
+
+                <button class="btn btn-primary" type="submit" {{ $problem->testCases->isEmpty() ? 'disabled' : '' }}>Submit Code</button>
+            </form>
+        </section>
+    </div>
+</div>
+@endsection
