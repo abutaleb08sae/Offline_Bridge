@@ -10,11 +10,6 @@
                 <h2 class="card-title">Local Programming Judge</h2>
                 <p class="card-subtitle">Solve programming problems on the OfflineBridge LAN.</p>
             </div>
-            @if($runnerConfigured)
-                <span class="badge badge-success">VM runner configured</span>
-            @else
-                <span class="badge badge-warning">VM runner unavailable</span>
-            @endif
         </div>
 
         @if($problems->isEmpty())
