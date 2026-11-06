@@ -145,7 +145,9 @@ class LabSubmissionTest extends TestCase
             ->get(route('labs.index'))
             ->assertOk()
             ->assertSee('Upload New Lab Task')
-            ->assertSee('Upload First Lab Task')
+            ->assertSee('Click to choose or drag')
+            ->assertSee('No tasks uploaded yet. Uploaded assignment packages and files will appear here for management and student access.')
+            ->assertDontSee('Upload First Lab Task')
             ->assertDontSee('No teacher-published files are available yet.');
     }
 }
