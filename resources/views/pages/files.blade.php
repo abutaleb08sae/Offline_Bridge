@@ -44,7 +44,7 @@
         </div>
     @endif
 
-    @if(auth()->user()?->role === 'admin')
+    @if(auth()->check() && auth()->user()->role === 'admin')
     <!-- Instructor Upload Card -->
     <div class="card">
         <div class="card-header">
@@ -164,24 +164,35 @@
                 <h4 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-1);">
                     No Lab Tasks Uploaded Yet
                 </h4>
-                <p style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 480px; margin: 0 auto var(--space-4);">
-                    Upload a Cisco Packet Tracer (.pkt) activity file or lab assignment sheet above to share with offline student PCs over the local Wi-Fi subnet.
-                </p>
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('taskTitle').focus()">
-                    Upload First Lab Task
-                </button>
+                @if(auth()->check() && auth()->user()->role === 'admin')
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 480px; margin: 0 auto var(--space-4);">
+                        Upload a Cisco Packet Tracer (.pkt) activity file or lab assignment sheet above to share with offline student PCs over the local Wi-Fi subnet.
+                    </p>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('taskTitle').focus()">
+                        Upload First Lab Task
+                    </button>
+                @else
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 480px; margin: 0 auto var(--space-4);">
+                        No teacher-published files are available yet.
+                    </p>
+                @endif
             </div>
         @else
             <div class="table-container">
                 <table class="table" id="labTasksTable">
                     <thead>
                         <tr>
-                            <th style="width: 40px;">#</th>
-                            <th>Task Title & Instructions</th>
-                            <th>File Name & Type</th>
-                            <th>Size</th>
+                            @if(auth()->check() && auth()->user()->role === 'admin')
+                                <th style="width: 40px;">#</th>
+                                <th>Task Title & Instructions</th>
+                                <th>File Name & Type</th>
+                                <th>Size</th>
+                            @else
+                                <th>Title</th>
+                                <th>File Name</th>
+                            @endif
                             <th>Uploaded At</th>
-                            <th style="text-align: right; width: 180px;">Actions</th>
+                            <th style="text-align: right; width: 180px;">{{ auth()->check() && auth()->user()->role === 'admin' ? 'Actions' : 'Action' }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -190,22 +201,26 @@
                                 $ext = strtolower(pathinfo($task->file_name, PATHINFO_EXTENSION));
                             @endphp
                             <tr class="lab-task-row">
-                                <td style="color: var(--text-muted); font-size: var(--font-size-xs);">
-                                    {{ $index + 1 }}
-                                </td>
+                                @if(auth()->check() && auth()->user()->role === 'admin')
+                                    <td style="color: var(--text-muted); font-size: var(--font-size-xs);">
+                                        {{ $index + 1 }}
+                                    </td>
+                                @endif
                                 <td>
                                     <div class="task-title-text" style="font-weight: 700; color: var(--text-main); margin-bottom: 0.15rem;">
                                         {{ $task->title }}
                                     </div>
-                                    @if($task->description)
-                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.35; max-width: 400px; margin-bottom: 0.25rem;">
-                                            {{ $task->description }}
-                                        </div>
-                                    @endif
-                                    @if(isset($task->submissions_count) && $task->submissions_count > 0)
-                                        <span class="badge badge-success" style="font-size: 0.65rem;">
-                                            {{ $task->submissions_count }} {{ \Illuminate\Support\Str::plural('Submission', $task->submissions_count) }}
-                                        </span>
+                                    @if(auth()->check() && auth()->user()->role === 'admin')
+                                        @if($task->description)
+                                            <div style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.35; max-width: 400px; margin-bottom: 0.25rem;">
+                                                {{ $task->description }}
+                                            </div>
+                                        @endif
+                                        @if(isset($task->submissions_count) && $task->submissions_count > 0)
+                                            <span class="badge badge-success" style="font-size: 0.65rem;">
+                                                {{ $task->submissions_count }} {{ \Illuminate\Support\Str::plural('Submission', $task->submissions_count) }}
+                                            </span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
@@ -224,9 +239,11 @@
                                         </span>
                                     </div>
                                 </td>
-                                <td style="font-size: var(--font-size-xs); font-family: monospace; color: var(--text-muted);">
-                                    {{ $task->formatted_file_size }}
-                                </td>
+                                @if(auth()->check() && auth()->user()->role === 'admin')
+                                    <td style="font-size: var(--font-size-xs); font-family: monospace; color: var(--text-muted);">
+                                        {{ $task->formatted_file_size }}
+                                    </td>
+                                @endif
                                 <td style="font-size: var(--font-size-xs); color: var(--text-muted);">
                                     <div>{{ $task->created_at->format('M d, Y') }}</div>
                                     <div style="font-size: 0.7rem; color: var(--text-muted);">{{ $task->created_at->format('h:i A') }} ({{ $task->created_at->diffForHumans() }})</div>
@@ -241,7 +258,7 @@
                                             <span>Download</span>
                                         </a>
 
-                                        @if(auth()->user()?->role === 'admin')
+                                        @if(auth()->check() && auth()->user()->role === 'admin')
                                         <!-- Delete Button Form -->
                                         <form action="{{ route('labs.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($task->title) }}\'?\n\n@if(isset($task->submissions_count) && $task->submissions_count > 0)WARNING: This task has {{ $task->submissions_count }} student submission(s) which will also be removed from storage!\n\n@endif This will remove the file from Master storage.');" style="display: inline;">
                                             @csrf
@@ -267,7 +284,7 @@
 </div>
 
 <!-- Interactive Client-side Script (Zero External Dependencies) -->
-@if(auth()->user()?->role === 'admin')
+@if(auth()->check() && auth()->user()->role === 'admin')
 <script>
     // Drag & Drop handlers for dropzone
     const dropzoneBox = document.getElementById('dropzoneBox');

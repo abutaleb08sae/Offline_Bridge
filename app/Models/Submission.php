@@ -13,6 +13,7 @@ class Submission extends Model
 
     protected $fillable = [
         'lab_task_id',
+        'user_id',
         'student_name',
         'student_id',
         'client_ip',

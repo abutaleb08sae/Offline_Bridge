@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\LabTask;
+use App\Models\Submission;
 use App\Models\ActivityLog;
 use App\Services\ActivityLogger;
 
@@ -58,6 +59,46 @@ class LabTaskController extends Controller
     }
 
     /**
+     * Store a student submission for a lab task.
+     */
+    public function storeSubmission(Request $request)
+    {
+        $validated = $request->validate([
+            'lab_task_id' => 'required|exists:lab_tasks,id',
+            'student_name' => 'required|string|max:100',
+            'student_id' => 'required|string|max:50',
+            'submission_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,zip,pdf,cpp'],
+        ], [
+            'submission_file.extensions' => 'The submission file must be a Packet Tracer file (.pkt, .pkz), ZIP archive (.zip), PDF document (.pdf), or C++ source file (.cpp).',
+            'submission_file.max' => 'The file size cannot exceed 50MB (51,200 KB).',
+        ]);
+
+        $file = $request->file('submission_file');
+        $cleanStudentId = preg_replace('/[^a-zA-Z0-9_-]/', '', $validated['student_id']) ?: 'student';
+        $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $file->getClientOriginalName()) ?: 'solution';
+        $fileName = uniqid('', true) . '_' . $cleanStudentId . '_' . $cleanName;
+        $filePath = $file->storeAs('submissions', $fileName, 'submissions');
+
+        Submission::create([
+            'lab_task_id' => $validated['lab_task_id'],
+            'user_id' => $request->user()?->id,
+            'student_name' => $validated['student_name'],
+            'student_id' => $validated['student_id'],
+            'client_ip' => $request->ip() ?: '127.0.0.1',
+            'file_path' => $filePath,
+        ]);
+
+        ActivityLogger::log(
+            'Solution Submitted',
+            "Student {$validated['student_name']} ({$validated['student_id']}) submitted for task #{$validated['lab_task_id']}",
+            'success',
+            $request
+        );
+
+        return redirect()->back()->with('success', 'Solution file submitted successfully!');
+    }
+
+    /**
      * Download the lab task file.
      */
     public function download(Request $request, $id)
@@ -80,10 +121,12 @@ class LabTaskController extends Controller
     {
         $task = LabTask::with('submissions')->findOrFail($id);
 
-        // Delete associated student submission files from public disk to prevent orphan storage leaks
+        // Remove submission files from both the current and legacy storage locations.
         foreach ($task->submissions as $submission) {
-            if ($submission->file_path && Storage::disk('public')->exists($submission->file_path)) {
-                Storage::disk('public')->delete($submission->file_path);
+            foreach (['submissions', 'public'] as $disk) {
+                if ($submission->file_path && Storage::disk($disk)->exists($submission->file_path)) {
+                    Storage::disk($disk)->delete($submission->file_path);
+                }
             }
         }
 

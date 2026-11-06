@@ -3,7 +3,7 @@
 @section('title', 'Student Submissions')
 
 @section('content')
-<div style="display: flex; flex-direction: column; gap: var(--space-6);">
+<div id="submissionDashboard" style="display: flex; flex-direction: column; gap: var(--space-6);">
 
     <!-- Section 1: Submissions Metrics Row -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
@@ -91,15 +91,6 @@
                     Completed assignments received from client PCs over the local offline LAN
                 </p>
             </div>
-
-            <div style="display: flex; align-items: center; gap: var(--space-3);">
-                <a href="{{ route('submissions.create') }}" target="_blank" class="btn btn-secondary" style="font-size: var(--font-size-xs); display: inline-flex; align-items: center; gap: var(--space-2);">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 14px; height: 14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                    <span>Open Student Portal View</span>
-                </a>
-            </div>
         </div>
 
         <!-- Filter & Search Bar -->
@@ -124,15 +115,13 @@
                 <p style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 480px; margin: 0 auto var(--space-4);">
                     When students submit their Packet Tracer solutions from client PCs via the <code style="color: var(--primary);">/submit</code> route, their work will appear here immediately.
                 </p>
-                <a href="{{ route('submissions.create') }}" target="_blank" class="btn btn-secondary">
-                    View Student Submission Portal
-                </a>
             </div>
         @else
             <div class="table-container">
                 <table class="table" id="submissionsTable">
                     <thead>
                         <tr>
+                            <th style="width: 80px;">Submission ID</th>
                             <th style="width: 170px;">Submission Time</th>
                             <th>Student Info</th>
                             <th style="width: 140px;">Client IP</th>
@@ -144,6 +133,10 @@
                     <tbody>
                         @foreach($submissions as $sub)
                             <tr class="submission-row">
+                                <td style="font-family: monospace; color: var(--text-muted);">
+                                    #{{ $sub->id }}
+                                </td>
+
                                 <!-- 1. Submission Time -->
                                 <td>
                                     <div style="font-weight: 600; font-size: var(--font-size-xs); color: var(--text-main);">
@@ -237,8 +230,48 @@
 
 <!-- Real-time Filter Script (Pure Vanilla JS - Zero CDN) -->
 <script>
+    async function refreshSubmissionsDashboard() {
+        try {
+            const response = await fetch(window.location.href, {
+                cache: 'no-store',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Dashboard refresh failed with status ${response.status}`);
+            }
+
+            const html = await response.text();
+            const refreshedDashboard = new DOMParser()
+                .parseFromString(html, 'text/html')
+                .getElementById('submissionDashboard');
+            const currentDashboard = document.getElementById('submissionDashboard');
+
+            if (!refreshedDashboard || !currentDashboard) {
+                throw new Error('Dashboard refresh response did not contain the submissions dashboard.');
+            }
+
+            const searchInput = document.getElementById('submissionSearchInput');
+            const searchQuery = searchInput ? searchInput.value : '';
+            currentDashboard.innerHTML = refreshedDashboard.innerHTML;
+
+            const refreshedSearchInput = document.getElementById('submissionSearchInput');
+            if (refreshedSearchInput) {
+                refreshedSearchInput.value = searchQuery;
+                filterSubmissionsTable();
+            }
+        } catch (error) {
+            console.error('Unable to refresh the submissions dashboard.', error);
+        }
+    }
+
+    window.setInterval(refreshSubmissionsDashboard, 15000);
+
     function filterSubmissionsTable() {
-        const query = document.getElementById('submissionSearchInput').value.toLowerCase();
+        const searchInput = document.getElementById('submissionSearchInput');
+        if (!searchInput) return;
+
+        const query = searchInput.value.toLowerCase();
         const rows = document.querySelectorAll('.submission-row');
 
         rows.forEach(row => {
@@ -263,4 +296,3 @@
     }
 </script>
 @endsection
-

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Submission;
 use App\Models\LabTask;
@@ -18,50 +17,7 @@ class SubmissionController extends Controller
         $labTasks = LabTask::latest()->get();
         $clientIp = request()->ip() ?? '127.0.0.1';
 
-        return view('submissions.create', compact('labTasks', 'clientIp'));
-    }
-
-    /**
-     * Store a student submission for a lab task.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'lab_task_id' => 'required|exists:lab_tasks,id',
-            'student_name' => 'required|string|max:100',
-            'student_id' => 'required|string|max:50',
-            'submission_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,zip,pdf'],
-        ], [
-            'submission_file.extensions' => 'The submission file must be a Cisco Packet Tracer file (.pkt, .pkz), ZIP archive (.zip), or PDF document (.pdf).',
-            'submission_file.max' => 'The file size cannot exceed 50MB (51,200 KB).',
-        ]);
-
-        $file = $request->file('submission_file');
-        $originalName = $file->getClientOriginalName();
-        $cleanStudentId = preg_replace('/[^a-zA-Z0-9_-]/', '', $request->student_id) ?: 'student';
-        $cleanName = preg_replace('/[^a-zA-Z0-9._-]/', '', $originalName) ?: 'solution.pkt';
-        $fileName = time() . '_' . $cleanStudentId . '_' . $cleanName;
-
-        // Store file in storage/app/public/submissions/
-        $filePath = $file->storeAs('submissions', $fileName, 'public');
-
-        $submission = Submission::create([
-            'lab_task_id' => $validated['lab_task_id'],
-            'student_name' => $validated['student_name'],
-            'student_id' => $validated['student_id'],
-            'client_ip' => $request->ip() ?: '127.0.0.1',
-            'file_path' => $filePath,
-        ]);
-
-        // Audit Trail Activity Log
-        ActivityLogger::log(
-            'Solution Submitted',
-            "Student {$request->student_name} ({$request->student_id}) submitted for task #{$request->lab_task_id}",
-            'success',
-            $request
-        );
-
-        return redirect()->back()->with('success', 'Solution file submitted successfully!');
+        return view('labs.submit', compact('labTasks', 'clientIp'));
     }
 
     /**
@@ -89,7 +45,11 @@ class SubmissionController extends Controller
     {
         $submission = Submission::findOrFail($id);
 
-        if (!Storage::disk('public')->exists($submission->file_path)) {
+        $disk = Storage::disk('submissions')->exists($submission->file_path)
+            ? 'submissions'
+            : 'public';
+
+        if (!Storage::disk($disk)->exists($submission->file_path)) {
             abort(404, 'The submitted file does not exist on Master storage.');
         }
 
@@ -100,6 +60,6 @@ class SubmissionController extends Controller
             request()
         );
 
-        return Storage::disk('public')->download($submission->file_path, basename($submission->file_path));
+        return Storage::disk($disk)->download($submission->file_path, basename($submission->file_path));
     }
 }
