@@ -4,13 +4,25 @@ namespace App\Services;
 
 use App\Models\JudgeProblem;
 use Illuminate\Database\Eloquent\Collection;
-use RuntimeException;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
+use Throwable;
 
 class LocalJudgeRunner
 {
+    private const VERDICTS = [
+        'Accepted',
+        'Wrong Answer',
+        'Compilation Error',
+        'Time Limit Exceeded',
+        'Security Violation',
+        'Runtime Error',
+        'Output Limit Exceeded',
+    ];
+
     /**
-     * Judge every case inside one resource-limited, network-disabled container.
+     * Send a submission to a trusted helper that must execute it in a disposable Windows VM.
      *
      * @return array{verdict: string, details: ?string}
      */
@@ -18,126 +30,81 @@ class LocalJudgeRunner
         string $language,
         JudgeProblem $problem,
         Collection $testCases,
-        string $workDirectory
+        string $code
     ): array {
-        $containerName = 'offline-bridge-judge-' . bin2hex(random_bytes(12));
+        $runnerPath = config('judge.vm_runner');
+
+        if (!is_string($runnerPath) || $runnerPath === '') {
+            return [
+                'verdict' => 'Runner Unavailable',
+                'details' => 'No isolated Windows VM runner is configured. The submission was saved but not executed.',
+            ];
+        }
+
+        if (!str_starts_with($runnerPath, '\\\\') && preg_match('/^[A-Za-z]:\\\\/', $runnerPath) !== 1) {
+            return [
+                'verdict' => 'Runner Unavailable',
+                'details' => 'The configured VM runner path must be an absolute Windows path.',
+            ];
+        }
+
+        if (!is_file($runnerPath)) {
+            return [
+                'verdict' => 'Runner Unavailable',
+                'details' => 'The configured Windows VM runner executable was not found.',
+            ];
+        }
+
+        if ($testCases->count() > (int) config('judge.max_test_cases', 100)) {
+            return [
+                'verdict' => 'Runner Error',
+                'details' => 'The problem exceeds the configured maximum number of test cases.',
+            ];
+        }
+
+        if ($testCases->isEmpty()) {
+            return [
+                'verdict' => 'Runner Error',
+                'details' => 'No test cases are configured for this problem.',
+            ];
+        }
+
         $timeLimit = max(1, min((int) $problem->time_limit, (int) config('judge.max_time_limit', 10)));
         $memoryLimit = max(64, min((int) $problem->memory_limit, (int) config('judge.max_memory_limit', 512)));
-        $compileTimeout = (int) config('judge.compile_timeout', 30);
+        $request = [
+            'protocol_version' => 1,
+            'language' => $language,
+            'code' => $code,
+            'time_limit' => $timeLimit,
+            'memory_limit' => $memoryLimit,
+            'test_cases' => $testCases->map(static fn ($testCase): array => [
+                'input' => $testCase->input,
+                'expected_output' => $testCase->expected_output,
+            ])->values()->all(),
+        ];
 
         try {
-            $start = $this->runProcess(new Process([
-                (string) config('judge.docker_binary', 'docker'),
-                'run',
-                '--detach',
-                '--name', $containerName,
-                '--network', 'none',
-                '--read-only',
-                '--cap-drop', 'ALL',
-                '--security-opt', 'no-new-privileges',
-                '--pids-limit', '64',
-                '--memory', $memoryLimit . 'm',
-                '--memory-swap', $memoryLimit . 'm',
-                '--cpus', '1',
-                '--user', '65534:65534',
-                '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m',
-                '--mount', 'type=bind,source=' . $workDirectory . ',target=/input,readonly',
-                (string) config('judge.docker_image', 'offline-bridge/judge:latest'),
-                'sleep',
-                'infinity',
-            ]), 15);
+            $payload = json_encode($request, JSON_THROW_ON_ERROR);
+        } catch (Throwable $exception) {
+            Log::error('Unable to encode local judge request.', ['exception' => $exception]);
 
-            if (!$start['successful']) {
-                throw new RuntimeException('Unable to start the isolated judge container: ' . $this->limitDetails($start['stdout'] . $start['stderr']));
-            }
-
-            if ($language === 'cpp') {
-                $compile = $this->runProcess(new Process([
-                    (string) config('judge.docker_binary', 'docker'),
-                    'exec',
-                    $containerName,
-                    'timeout',
-                    '-k', '1',
-                    $compileTimeout . 's',
-                    'g++',
-                    '-std=c++17',
-                    '-O2',
-                    '/input/main.cpp',
-                    '-o',
-                    '/tmp/solution',
-                ]), $compileTimeout + 5);
-                $this->throwIfDockerUnavailable($compile['stderr']);
-
-                if ($compile['output_limit']) {
-                    return ['verdict' => 'Compilation Error', 'details' => 'Compiler output exceeded the judge output limit.'];
-                }
-
-                if ($compile['timed_out']) {
-                    return ['verdict' => 'Compilation Error', 'details' => 'Compilation exceeded the allowed compile time.'];
-                }
-
-                if (!$compile['successful']) {
-                    return ['verdict' => 'Compilation Error', 'details' => $this->limitDetails($compile['stdout'] . $compile['stderr'])];
-                }
-            }
-
-            foreach ($testCases as $index => $testCase) {
-                $command = $language === 'cpp'
-                    ? ['timeout', '-k', '1', $timeLimit . 's', '/tmp/solution']
-                    : ['timeout', '-k', '1', $timeLimit . 's', 'python3', '/input/main.py'];
-                $process = new Process([
-                    (string) config('judge.docker_binary', 'docker'),
-                    'exec',
-                    '--interactive',
-                    $containerName,
-                    ...$command,
-                ]);
-                $process->setInput($testCase->input);
-
-                $execution = $this->runProcess($process, $timeLimit + 5);
-                $this->throwIfDockerUnavailable($execution['stderr']);
-
-                if ($execution['timed_out'] || in_array($execution['exit_code'], [124, 137], true)) {
-                    return ['verdict' => 'Time Limit Exceeded', 'details' => 'Execution exceeded the problem time limit.'];
-                }
-
-                if ($execution['output_limit']) {
-                    return ['verdict' => 'Output Limit Exceeded', 'details' => 'Output exceeded the judge output limit.'];
-                }
-
-                if (!$execution['successful']) {
-                    $details = $this->limitDetails($execution['stderr']);
-
-                    return [
-                        'verdict' => 'Runtime Error',
-                        'details' => $details !== '' ? $details : 'The program exited with a non-zero status.',
-                    ];
-                }
-
-                if (trim($execution['stdout']) !== trim($testCase->expected_output)) {
-                    return [
-                        'verdict' => 'Wrong Answer',
-                        'details' => 'Output did not match on test case ' . ($index + 1) . '.',
-                    ];
-                }
-            }
-
-            return ['verdict' => 'Accepted', 'details' => null];
-        } finally {
-            $this->removeContainer($containerName);
+            return ['verdict' => 'Runner Error', 'details' => 'The submission could not be prepared for the VM runner.'];
         }
-    }
 
-    /**
-     * @return array{stdout: string, stderr: string, successful: bool, exit_code: ?int, timed_out: bool, output_limit: bool}
-     */
-    private function runProcess(Process $process, float $timeout): array
-    {
-        $process->setTimeout($timeout);
+        if (strlen($payload) > (int) config('judge.max_request_bytes', 2097152)) {
+            return [
+                'verdict' => 'Runner Error',
+                'details' => 'The submission and test cases exceed the VM runner request limit.',
+            ];
+        }
+
+        $process = new Process([$runnerPath, '--json-stdin']);
+        $process->setInput($payload);
+        $process->setTimeout((float) config('judge.runner_timeout', 180));
+        $outputLimit = (int) config('judge.max_output_bytes', 1048576);
         $stdout = '';
         $stderr = '';
-        $timedOut = false;
-        $outputLimitExceeded = false;
+        $outputExceeded = false;
 
         try {
             $process->start();
@@ -145,11 +112,14 @@ class LocalJudgeRunner
             while ($process->isRunning()) {
                 $stdout .= $process->getIncrementalOutput();
                 $stderr .= $process->getIncrementalErrorOutput();
+                if (strlen($stdout) + strlen($stderr) > $outputLimit) {
+                    $outputExceeded = true;
+                }
                 $process->clearOutput();
                 $process->clearErrorOutput();
 
-                if (strlen($stdout) + strlen($stderr) > (int) config('judge.max_output_bytes', 1048576)) {
-                    $outputLimitExceeded = true;
+                if (strlen($stdout) + strlen($stderr) > $outputLimit) {
+                    $outputExceeded = true;
                     $process->stop(0);
                     break;
                 }
@@ -159,58 +129,53 @@ class LocalJudgeRunner
 
             $stdout .= $process->getIncrementalOutput();
             $stderr .= $process->getIncrementalErrorOutput();
-        } catch (\Symfony\Component\Process\Exception\ProcessTimedOutException) {
-            $timedOut = true;
+        } catch (ProcessTimedOutException) {
             $process->stop(0);
+
+            return ['verdict' => 'Runner Error', 'details' => 'The isolated VM runner did not respond before its timeout.'];
+        } catch (Throwable $exception) {
+            Log::error('Unable to invoke the configured local judge VM runner.', ['exception' => $exception]);
+
+            return ['verdict' => 'Runner Error', 'details' => 'The configured isolated VM runner could not be started.'];
+        }
+
+        if ($outputExceeded) {
+            return ['verdict' => 'Runner Error', 'details' => 'The VM runner response exceeded the configured output limit.'];
+        }
+
+        if (!$process->isSuccessful()) {
+            Log::error('Local judge VM runner returned a failure.', [
+                'exit_code' => $process->getExitCode(),
+                'stderr' => mb_substr($stderr, 0, 8000),
+            ]);
+
+            return ['verdict' => 'Runner Error', 'details' => 'The isolated VM runner failed to process the submission.'];
+        }
+
+        try {
+            $response = json_decode($stdout, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable $exception) {
+            Log::error('Local judge VM runner returned invalid JSON.', ['exception' => $exception]);
+
+            return ['verdict' => 'Runner Error', 'details' => 'The isolated VM runner returned an invalid response.'];
+        }
+
+        if (
+            !is_array($response)
+            || ($response['protocol_version'] ?? null) !== 1
+            || !is_string($response['verdict'] ?? null)
+            || !in_array($response['verdict'], self::VERDICTS, true)
+        ) {
+            Log::error('Local judge VM runner returned an unsupported response.');
+
+            return ['verdict' => 'Runner Error', 'details' => 'The isolated VM runner returned an unsupported response.'];
         }
 
         return [
-            'stdout' => $stdout,
-            'stderr' => $stderr,
-            'successful' => $process->isSuccessful(),
-            'exit_code' => $process->getExitCode(),
-            'timed_out' => $timedOut,
-            'output_limit' => $outputLimitExceeded,
+            'verdict' => $response['verdict'],
+            'details' => isset($response['details']) && is_string($response['details'])
+                ? mb_substr($response['details'], 0, 8000)
+                : null,
         ];
-    }
-
-    private function throwIfDockerUnavailable(string $errorOutput): void
-    {
-        $errorOutput = strtolower($errorOutput);
-        foreach ([
-            'error response from daemon',
-            'cannot connect to the docker daemon',
-            'error during connect',
-            'no such container',
-            'unable to find image',
-            'pull access denied',
-            'the system cannot find the file specified',
-            'docker desktop is unable to start',
-        ] as $message) {
-            if (str_contains($errorOutput, $message)) {
-                throw new RuntimeException('Docker judge runner error: ' . $this->limitDetails($errorOutput));
-            }
-        }
-    }
-
-    private function removeContainer(string $containerName): void
-    {
-        $process = new Process([
-            (string) config('judge.docker_binary', 'docker'),
-            'rm',
-            '--force',
-            $containerName,
-        ]);
-        $process->setTimeout(10);
-        $process->run();
-
-        if (!$process->isSuccessful() && !str_contains($process->getErrorOutput(), 'No such container')) {
-            throw new RuntimeException('Unable to clean up judge container: ' . $this->limitDetails($process->getErrorOutput()));
-        }
-    }
-
-    private function limitDetails(string $details): string
-    {
-        return mb_substr(trim($details), 0, 8000);
     }
 }

@@ -96,5 +96,38 @@ class LocalJudgeTest extends TestCase
             'code' => 'print(input())',
             'verdict' => 'Accepted',
         ]);
+
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'Judge Submission',
+        ]);
+    }
+
+    public function test_submission_is_saved_without_execution_when_vm_runner_is_unconfigured(): void
+    {
+        config(['judge.vm_runner' => null]);
+
+        $problem = JudgeProblem::create([
+            'title' => 'Sample',
+            'description' => 'A sample problem.',
+        ]);
+        JudgeTestCase::create([
+            'judge_problem_id' => $problem->id,
+            'input' => '3',
+            'expected_output' => '3',
+        ]);
+
+        $this->post(route('judge.submit'), [
+            'judge_problem_id' => $problem->id,
+            'language' => 'python',
+            'code' => 'print(input())',
+        ])
+            ->assertRedirect(route('judge.show', $problem->id))
+            ->assertSessionHas('judge_result.verdict', 'Runner Unavailable');
+
+        $this->assertDatabaseHas('judge_submissions', [
+            'judge_problem_id' => $problem->id,
+            'language' => 'python',
+            'verdict' => 'Runner Unavailable',
+        ]);
     }
 }

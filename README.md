@@ -197,23 +197,19 @@ graph TB
 
 ### Local Judge Setup
 
-The judge executes student code only inside Docker Linux containers; it never invokes a host compiler or interpreter. On the Master PC, build the local runner image and apply the isolated judge migrations:
+The web application does not execute submitted code on the Master PC. To enable judging, configure a trusted Windows VM runner executable in `JUDGE_VM_RUNNER`. The executable must receive one JSON request from standard input when invoked with `--json-stdin`, run the submission in a disposable isolated Windows VM, and write one JSON response to standard output. The runner protocol version is `1`; requests include the language, source, resource limits, and test cases. Responses must include `protocol_version: 1`, a supported `verdict`, and optional string `details`. Until a valid runner is configured, submissions are saved as **Runner Unavailable** without execution.
 
 ```powershell
-docker build -t offline-bridge/judge:latest -f docker/judge/Dockerfile .
 php artisan migrate
 ```
 
-Docker must be running in Linux-container mode, and Docker Desktop must be allowed to mount the application's `storage` directory. The web-server account must also be able to access the Docker daemon. Student PCs need only access the local OfflineBridge URL; the runner image and its compiler/interpreter are local to the Master PC.
-
-Optional `.env` overrides:
+Configure the helper with an absolute local path in the Master PC's `.env` file:
 
 ```ini
-JUDGE_DOCKER_BINARY=docker
-JUDGE_DOCKER_IMAGE=offline-bridge/judge:latest
+JUDGE_VM_RUNNER="C:\OfflineBridge\judge-vm-runner.exe"
 ```
 
-Each run disables network access, mounts source and test input read-only, runs as a non-root UID with all Linux capabilities dropped, and limits CPU, memory, process count, execution time, and captured output. The configured problem memory limit is capped at 512 MB and its time limit at 10 seconds. Keep Docker and the host patched; containers reduce risk but are not a substitute for keeping the runner isolated from sensitive host data.
+The VM runner is an administrator-installed trust boundary and must enforce network isolation, disposable state, CPU/memory/time limits, and restricted access to host data. The application caps configured problem limits at 10 seconds and 512 MB and validates the runner's response. Student PCs need only access the local OfflineBridge URL.
 
 ---
 

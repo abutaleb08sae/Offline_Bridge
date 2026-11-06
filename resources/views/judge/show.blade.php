@@ -62,7 +62,7 @@
 
                 <label for="code" class="form-label">Source code</label>
                 <textarea id="code" name="code" class="form-textarea" rows="20" required maxlength="64000" spellcheck="false" autocapitalize="off" autocomplete="off" style="font-family: Consolas, 'Courier New', monospace; resize: vertical;">{{ old('code') }}</textarea>
-                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Maximum 64 KB. Code runs in a network-disabled, resource-limited Docker container.</p>
+                <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Maximum 64 KB. Code is sent only to a configured isolated Windows VM runner; it is never executed directly by the web server.</p>
 
                 <button class="btn btn-primary" type="submit" {{ $problem->testCases->isEmpty() ? 'disabled' : '' }}>Submit Code</button>
             </form>

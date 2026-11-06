@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\JudgeProblem;
 use App\Models\JudgeSubmission;
+use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
-use RuntimeException;
 
 class LocalJudgeController extends Controller
 {
@@ -18,7 +17,12 @@ class LocalJudgeController extends Controller
     {
         $problems = JudgeProblem::withCount('testCases')->latest()->get();
 
-        return view('judge.index', compact('problems'));
+        return view('judge.index', [
+            'problems' => $problems,
+            'runnerConfigured' => is_string(config('judge.vm_runner'))
+                && config('judge.vm_runner') !== ''
+                && is_file(config('judge.vm_runner')),
+        ]);
     }
 
     public function show(int $id): View
@@ -46,37 +50,15 @@ class LocalJudgeController extends Controller
         }
 
         $problem = JudgeProblem::with('testCases')->findOrFail($validated['judge_problem_id']);
-        if ($problem->testCases->isEmpty()) {
-            return back()->withInput()->withErrors([
-                'judge_problem_id' => 'This problem has no test cases and cannot be judged yet.',
-            ]);
-        }
-
         $code = $validated['code'];
 
-        if (preg_match('/\b(?:system|exec|shell_exec|WinExec|shutdown)\s*\(/i', $code) === 1) {
+        if (preg_match('/(?:\bsystem\s*\(|\bexec\s*\(|\bshell_exec\s*\(|\bWinExec\b|\bshutdown\b)/i', $code) === 1) {
             $verdict = 'Security Violation';
             $details = 'The submission contains a prohibited command pattern.';
         } else {
-            $workDirectory = storage_path('app/temp_judge/' . bin2hex(random_bytes(16)));
-            if (!File::makeDirectory($workDirectory, 0700, true)) {
-                throw new RuntimeException('Unable to create the temporary judge directory.');
-            }
-
-            try {
-                $sourcePath = $workDirectory . DIRECTORY_SEPARATOR . ($validated['language'] === 'cpp' ? 'main.cpp' : 'main.py');
-                if (file_put_contents($sourcePath, $code, LOCK_EX) === false) {
-                    throw new RuntimeException('Unable to save the temporary judge source file.');
-                }
-
-                $result = $runner->judge($validated['language'], $problem, $problem->testCases, $workDirectory);
-                $verdict = $result['verdict'];
-                $details = $result['details'];
-            } finally {
-                if (File::isDirectory($workDirectory) && !File::deleteDirectory($workDirectory)) {
-                    throw new RuntimeException('Unable to remove the temporary judge directory.');
-                }
-            }
+            $result = $runner->judge($validated['language'], $problem, $problem->testCases, $code);
+            $verdict = $result['verdict'];
+            $details = $result['details'];
         }
 
         $submission = JudgeSubmission::create([
@@ -87,6 +69,13 @@ class LocalJudgeController extends Controller
             'verdict' => $verdict,
             'error_details' => $details,
         ]);
+
+        ActivityLogger::log(
+            'Judge Submission',
+            "Submission #{$submission->id} for {$problem->title}: {$verdict}",
+            $verdict === 'Accepted' ? 'success' : 'info',
+            $request
+        );
 
         return redirect()->route('judge.show', $problem->id)->with('judge_result', [
             'id' => $submission->id,
