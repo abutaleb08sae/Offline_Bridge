@@ -30,13 +30,11 @@ class NavigationController extends Controller
     }
 
     /**
-     * Users Management Page.
+     * Users Management Page (Delegates to UserController).
      */
     public function users()
     {
-        return view('pages.users', [
-            'users' => MockDataService::getUsersList()
-        ]);
+        return redirect()->route('users.index');
     }
 
     /**

@@ -30,6 +30,13 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->update([
+            'last_login_at' => now(),
+            'status' => 'active',
+        ]);
+
         return redirect()->route('dashboard');
     }
 

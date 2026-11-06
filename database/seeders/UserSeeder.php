@@ -24,11 +24,12 @@ class UserSeeder extends Seeder
                 'name' => 'Administrator',
                 'password' => Hash::make($password),
                 'role' => 'admin',
+                'status' => 'active',
             ]
         );
 
         if (!$admin->isAdmin()) {
-            $admin->forceFill(['role' => 'admin'])->save();
+            $admin->forceFill(['role' => 'admin', 'status' => 'active'])->save();
         }
     }
 }
