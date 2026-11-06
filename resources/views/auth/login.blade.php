@@ -34,6 +34,8 @@
 
             <button type="submit" class="btn btn-primary">Sign in</button>
         </form>
+
+        <p style="margin-bottom: 0; text-align: center;">Don't have an account? <a href="{{ route('register') }}">Register here</a></p>
     </main>
 </body>
 </html>

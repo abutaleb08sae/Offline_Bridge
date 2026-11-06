@@ -212,4 +212,101 @@ class LocalJudgeTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_registration_creates_a_non_admin_user_and_signs_them_in(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee(route('register'));
+
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee('name="name"', false)
+            ->assertSee('name="email"', false)
+            ->assertSee('name="password"', false);
+
+        $this->post(route('register.store'), [
+            'name' => 'New Student',
+            'email' => 'student@example.local',
+            'password' => 'a-strong-password',
+            'password_confirmation' => 'a-strong-password',
+        ])->assertRedirect(route('judge.index'));
+
+        $user = User::where('email', 'student@example.local')->firstOrFail();
+        $this->assertSame('user', $user->role);
+        $this->assertFalse($user->isAdmin());
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_non_admin_routes_are_protected_and_sidebar_is_role_aware(): void
+    {
+        foreach ([
+            '/users',
+            '/clients',
+            '/activities',
+            '/logs',
+            '/settings',
+            '/backup',
+            '/admin/submissions',
+            '/api/activities/stream',
+        ] as $path) {
+            $this->get($path)->assertRedirect(route('login'));
+        }
+
+        $student = User::factory()->create();
+        $this->actingAs($student)
+            ->get(route('judge.index'))
+            ->assertOk()
+            ->assertSee('Local Judge / Online Judge')
+            ->assertSee('Sign Out')
+            ->assertDontSee('>Users</span>', false)
+            ->assertDontSee('>Activities</span>', false);
+
+        foreach ([
+            '/users',
+            '/clients',
+            '/activities',
+            '/logs',
+            '/settings',
+            '/backup',
+            '/admin/submissions',
+            '/api/activities/stream',
+        ] as $path) {
+            $this->get($path)->assertForbidden();
+        }
+
+        $this->post('/labs/upload')->assertForbidden();
+    }
+
+    public function test_logged_in_judge_submission_is_associated_with_user(): void
+    {
+        $student = User::factory()->create();
+        $problem = JudgeProblem::create([
+            'title' => 'Sample',
+            'description' => 'A sample problem.',
+        ]);
+        JudgeTestCase::create([
+            'judge_problem_id' => $problem->id,
+            'input' => '3',
+            'expected_output' => '3',
+        ]);
+
+        $this->mock(LocalJudgeRunner::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('judge')
+                ->once()
+                ->andReturn(['verdict' => 'Accepted', 'details' => null]);
+        });
+
+        $this->actingAs($student)->post(route('judge.submit'), [
+            'judge_problem_id' => $problem->id,
+            'language' => 'python',
+            'code' => 'print(input())',
+        ])->assertRedirect(route('judge.show', $problem->id));
+
+        $this->assertDatabaseHas('judge_submissions', [
+            'user_id' => $student->id,
+            'judge_problem_id' => $problem->id,
+            'verdict' => 'Accepted',
+        ]);
+    }
 }

@@ -213,7 +213,14 @@ The VM runner is an administrator-installed trust boundary and must enforce netw
 
 ### Judge Administrator Access
 
-Judge problem creation and submission/code review require an authenticated account with the `admin` role. User accounts default to the `student` role. There is no public account-registration page; provision lab accounts through a trusted process, then promote the intended administrator in `php artisan tinker`:
+Judge problem creation and submission/code review require an authenticated account with the `admin` role. New registered accounts default to the `user` role. Set a unique administrator password in the Master PC's uncommitted `.env` file before seeding:
+
+```ini
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=choose-a-unique-password-of-at-least-12-characters
+```
+
+Then run `php artisan db:seed --class=UserSeeder`. The seeder creates the administrator once and will not reset that password on subsequent runs. Do not use a shared/predictable demo password in a deployed lab. To promote another account, use `php artisan tinker`:
 
 ```php
 $user = \App\Models\User::where('email', 'admin@example.local')->firstOrFail();

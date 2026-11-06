@@ -6,6 +6,7 @@ use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\LocalJudgeController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,20 +15,25 @@ use App\Http\Controllers\Auth\LoginController;
 */
 
 Route::get('/', [NavigationController::class, 'dashboard'])->name('dashboard');
-Route::get('/users', [NavigationController::class, 'users'])->name('users.index');
-Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
 Route::get('/applications', [NavigationController::class, 'applications'])->name('applications.index');
 Route::get('/files', [LabTaskController::class, 'index'])->name('files.index');
-Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
-Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
-Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
-Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.index');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,1')->name('register.store');
 });
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/users', [NavigationController::class, 'users'])->name('users.index');
+    Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
+    Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
+    Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
+    Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
+    Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.index');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -55,9 +61,11 @@ Route::prefix('judge')->name('judge.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/labs', [LabTaskController::class, 'index'])->name('labs.index');
-Route::post('/labs/upload', [LabTaskController::class, 'store'])->name('labs.store');
 Route::get('/labs/{id}/download', [LabTaskController::class, 'download'])->name('labs.download');
-Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.destroy');
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/labs/upload', [LabTaskController::class, 'store'])->name('labs.store');
+    Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -67,8 +75,10 @@ Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.d
 Route::get('/submit', [SubmissionController::class, 'create'])->name('submissions.create');
 Route::post('/submit', [SubmissionController::class, 'store'])->name('submissions.store');
 Route::post('/submissions/submit', [SubmissionController::class, 'store']);
-Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
-Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
+    Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -96,4 +106,4 @@ Route::get('/api/activities/stream', function (\Illuminate\Http\Request $request
             ];
         }),
     ]);
-})->name('activities.stream');
+})->middleware(['auth', 'admin'])->name('activities.stream');

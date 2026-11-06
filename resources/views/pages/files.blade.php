@@ -44,6 +44,7 @@
         </div>
     @endif
 
+    @if(auth()->user()?->role === 'admin')
     <!-- Instructor Upload Card -->
     <div class="card">
         <div class="card-header">
@@ -128,6 +129,7 @@
             </div>
         </form>
     </div>
+    @endif
 
     <!-- Master Local Files Library / Lab Tasks List -->
     <div class="card">
@@ -239,6 +241,7 @@
                                             <span>Download</span>
                                         </a>
 
+                                        @if(auth()->user()?->role === 'admin')
                                         <!-- Delete Button Form -->
                                         <form action="{{ route('labs.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($task->title) }}\'?\n\n@if(isset($task->submissions_count) && $task->submissions_count > 0)WARNING: This task has {{ $task->submissions_count }} student submission(s) which will also be removed from storage!\n\n@endif This will remove the file from Master storage.');" style="display: inline;">
                                             @csrf
@@ -250,6 +253,7 @@
                                                 <span>Delete</span>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -263,6 +267,7 @@
 </div>
 
 <!-- Interactive Client-side Script (Zero External Dependencies) -->
+@if(auth()->user()?->role === 'admin')
 <script>
     // Drag & Drop handlers for dropzone
     const dropzoneBox = document.getElementById('dropzoneBox');
@@ -371,4 +376,5 @@
         });
     }
 </script>
+@endif
 @endsection

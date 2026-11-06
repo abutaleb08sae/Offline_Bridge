@@ -37,6 +37,7 @@
 
         <!-- Navigation Menu -->
         <nav class="sidebar-nav">
+            @php($isAdmin = auth()->check() && auth()->user()->role === 'admin')
             <div class="nav-label">Management</div>
 
             <!-- Dashboard -->
@@ -47,6 +48,7 @@
                 <span>Dashboard</span>
             </a>
 
+            @if($isAdmin)
             <!-- Users -->
             <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.index') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -62,6 +64,7 @@
                 </svg>
                 <span>Clients</span>
             </a>
+            @endif
 
             <!-- Applications -->
             <a href="{{ route('applications.index') }}" class="nav-item {{ request()->routeIs('applications.index') ? 'active' : '' }}">
@@ -87,6 +90,7 @@
                 <span>Lab Tasks & Files</span>
             </a>
 
+            @if($isAdmin)
             <!-- Student Submissions -->
             <a href="{{ route('submissions.index') }}" class="nav-item {{ request()->routeIs('submissions.*') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -94,26 +98,18 @@
                 </svg>
                 <span>Submissions</span>
             </a>
+            @endif
 
-            @auth
-                @if(auth()->user()->isAdmin())
-                    <a href="{{ route('judge.admin.problems.create') }}" class="nav-item {{ request()->routeIs('judge.admin.problems.*') ? 'active' : '' }}">
-                        <span>Manage Judge Problems</span>
-                    </a>
-                    <a href="{{ route('judge.admin.submissions') }}" class="nav-item {{ request()->routeIs('judge.admin.submissions*') ? 'active' : '' }}">
-                        <span>Judge Submissions</span>
-                    </a>
-                @endif
-                <form method="POST" action="{{ route('logout') }}" style="padding: var(--space-2) var(--space-4);">
-                    @csrf
-                    <button class="btn btn-secondary" type="submit">Sign out ({{ auth()->user()->name }})</button>
-                </form>
-            @else
-                <a href="{{ route('login') }}" class="nav-item {{ request()->routeIs('login') ? 'active' : '' }}">
-                    <span>Sign in</span>
+            @if($isAdmin)
+                <a href="{{ route('judge.admin.problems.create') }}" class="nav-item {{ request()->routeIs('judge.admin.problems.*') ? 'active' : '' }}">
+                    <span>Manage Judge Problems</span>
                 </a>
-            @endauth
+                <a href="{{ route('judge.admin.submissions') }}" class="nav-item {{ request()->routeIs('judge.admin.submissions*') ? 'active' : '' }}">
+                    <span>Judge Submissions</span>
+                </a>
+            @endif
 
+            @if($isAdmin)
             <div class="nav-label">System & Logs</div>
 
             <!-- Activities -->
@@ -150,10 +146,28 @@
                 </svg>
                 <span>Backup</span>
             </a>
+            @endif
         </nav>
 
         <!-- Sidebar Footer Status Card -->
         <div class="sidebar-footer">
+            <div style="padding: var(--space-3);">
+                @auth
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-2);">
+                        <strong style="color: var(--text-main); overflow-wrap: anywhere;">{{ auth()->user()->name }}</strong>
+                        <span class="badge {{ $isAdmin ? 'badge-danger' : 'badge-neutral' }}">{{ strtoupper(auth()->user()->role) }}</span>
+                    </div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="btn btn-secondary" type="submit" style="width: 100%;">Sign Out</button>
+                    </form>
+                @else
+                    <div style="display: flex; gap: var(--space-2);">
+                        <a class="btn btn-secondary" href="{{ route('login') }}">Sign In</a>
+                        <a class="btn btn-primary" href="{{ route('register') }}">Register</a>
+                    </div>
+                @endauth
+            </div>
             <div class="lan-card">
                 <div class="lan-title">Master Local Host</div>
                 <div class="lan-ip">192.168.1.100</div>
