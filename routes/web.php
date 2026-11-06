@@ -48,6 +48,12 @@ Route::prefix('judge')->name('judge.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/problems/create', [LocalJudgeController::class, 'createProblem'])->name('admin.problems.create');
         Route::post('/problems/store', [LocalJudgeController::class, 'storeProblem'])->name('admin.problems.store');
+        Route::get('/problems/{id}/edit', [LocalJudgeController::class, 'editProblem'])
+            ->whereNumber('id')
+            ->name('problems.edit');
+        Route::match(['put', 'patch'], '/problems/{id}', [LocalJudgeController::class, 'updateProblem'])
+            ->whereNumber('id')
+            ->name('problems.update');
         Route::get('/submissions', [LocalJudgeController::class, 'allSubmissions'])->name('admin.submissions');
         Route::get('/submissions/{submission}', [LocalJudgeController::class, 'showSubmission'])
             ->whereNumber('submission')

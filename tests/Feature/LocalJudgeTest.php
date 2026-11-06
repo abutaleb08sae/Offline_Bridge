@@ -145,11 +145,16 @@ class LocalJudgeTest extends TestCase
     {
         $this->get(route('judge.admin.problems.create'))
             ->assertRedirect(route('login'));
+        $this->get(route('judge.problems.edit', 1))
+            ->assertRedirect(route('login'));
+        $this->put(route('judge.problems.update', 1), [])
+            ->assertRedirect(route('login'));
 
         $student = User::factory()->create();
         $this->actingAs($student)
             ->get(route('judge.admin.submissions'))
             ->assertForbidden();
+        $this->get(route('judge.problems.edit', 1))->assertForbidden();
     }
 
     public function test_admin_can_create_problem_and_manage_submission_details(): void
@@ -193,6 +198,80 @@ class LocalJudgeTest extends TestCase
         $this->get(route('judge.admin.submissions.show', $submission->id))
             ->assertOk()
             ->assertSee('int main() {}');
+    }
+
+    public function test_admin_can_edit_problem_and_synchronize_test_cases(): void
+    {
+        $admin = User::factory()->create();
+        $admin->forceFill(['role' => 'admin'])->save();
+        $this->actingAs($admin);
+
+        $problem = JudgeProblem::create([
+            'title' => 'Original title',
+            'description' => 'Original description.',
+            'time_limit' => 2,
+            'memory_limit' => 256,
+        ]);
+        $updatedCase = $problem->testCases()->create([
+            'input' => 'old input',
+            'expected_output' => 'old output',
+        ]);
+        $removedCase = $problem->testCases()->create([
+            'input' => 'removed input',
+            'expected_output' => 'removed output',
+        ]);
+
+        $this->get(route('judge.problems.edit', $problem->id))
+            ->assertOk()
+            ->assertSee('Original title')
+            ->assertSee('old input')
+            ->assertSee('Save Changes')
+            ->assertSee('+ Add Test Case');
+
+        $this->put(route('judge.problems.update', $problem->id), [
+            'title' => 'Updated title',
+            'description' => 'Updated description.',
+            'time_limit' => 3,
+            'memory_limit' => 512,
+            'test_cases' => [
+                [
+                    'id' => $updatedCase->id,
+                    'input' => 'updated input',
+                    'expected_output' => 'updated output',
+                ],
+                [
+                    'input' => 'new input',
+                    'expected_output' => 'new output',
+                ],
+            ],
+        ])
+            ->assertRedirect(route('judge.index'))
+            ->assertSessionHas('success', 'Problem updated successfully.');
+
+        $this->assertDatabaseHas('judge_problems', [
+            'id' => $problem->id,
+            'title' => 'Updated title',
+            'description' => 'Updated description.',
+            'time_limit' => 3,
+            'memory_limit' => 512,
+        ]);
+        $this->assertDatabaseHas('judge_test_cases', [
+            'id' => $updatedCase->id,
+            'judge_problem_id' => $problem->id,
+            'input' => 'updated input',
+            'expected_output' => 'updated output',
+        ]);
+        $this->assertDatabaseMissing('judge_test_cases', ['id' => $removedCase->id]);
+        $this->assertDatabaseHas('judge_test_cases', [
+            'judge_problem_id' => $problem->id,
+            'input' => 'new input',
+            'expected_output' => 'new output',
+        ]);
+
+        $this->get(route('judge.index'))
+            ->assertOk()
+            ->assertSee('Updated title')
+            ->assertSee(route('judge.problems.edit', $problem->id));
     }
 
     public function test_admin_can_log_in_and_log_out(): void

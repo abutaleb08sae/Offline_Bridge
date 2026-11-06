@@ -12,6 +12,12 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div class="card" role="status" style="margin-bottom: var(--space-4); border-color: var(--color-success-text); color: var(--color-success-text);">
+                {{ session('success') }}
+            </div>
+        @endif
+
         @if($problems->isEmpty())
             <p style="padding: var(--space-4); color: var(--text-muted);">No judge problems are available yet.</p>
         @else
@@ -35,6 +41,9 @@
                                 <td style="padding: var(--space-3);">{{ $problem->test_cases_count }}</td>
                                 <td style="padding: var(--space-3); text-align: right;">
                                     <a class="btn btn-primary" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
+                                    @if(auth()->check() && auth()->user()->role === 'admin')
+                                        <a class="btn btn-secondary" href="{{ route('judge.problems.edit', $problem->id) }}">Edit Problem</a>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

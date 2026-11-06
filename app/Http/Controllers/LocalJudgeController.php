@@ -80,6 +80,72 @@ class LocalJudgeController extends Controller
         return redirect()->route('judge.show', $problem->id)->with('success', 'Problem created successfully.');
     }
 
+    public function editProblem(int $id): View
+    {
+        $problem = JudgeProblem::with('testCases')->findOrFail($id);
+
+        return view('judge.admin.edit', compact('problem'));
+    }
+
+    public function updateProblem(Request $request, int $id): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:20000'],
+            'time_limit' => ['required', 'integer', 'min:1', 'max:10'],
+            'memory_limit' => ['required', 'integer', 'min:64', 'max:512'],
+            'test_cases' => ['required', 'array', 'min:1', 'max:100'],
+            'test_cases.*' => ['required', 'array:id,input,expected_output'],
+            'test_cases.*.id' => ['nullable', 'integer', 'distinct', 'exists:judge_test_cases,id'],
+            'test_cases.*.input' => ['present', 'nullable', 'string', 'max:65535'],
+            'test_cases.*.expected_output' => ['present', 'nullable', 'string', 'max:65535'],
+        ]);
+
+        $problem = JudgeProblem::findOrFail($id);
+
+        DB::transaction(function () use ($problem, $validated): void {
+            $testCases = $validated['test_cases'];
+            $submittedIds = array_values(array_filter(array_column($testCases, 'id')));
+            $ownedIds = $problem->testCases()->whereIn('id', $submittedIds)->pluck('id')->all();
+
+            if (count($submittedIds) !== count($ownedIds)) {
+                abort(404);
+            }
+
+            $problem->testCases()->whereNotIn('id', $submittedIds)->delete();
+
+            $problem->update([
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'time_limit' => $validated['time_limit'],
+                'memory_limit' => $validated['memory_limit'],
+            ]);
+
+            foreach ($testCases as $testCase) {
+                $attributes = [
+                    'input' => $testCase['input'] ?? '',
+                    'expected_output' => $testCase['expected_output'] ?? '',
+                ];
+
+                if (! empty($testCase['id'])) {
+                    $problem->testCases()->whereKey($testCase['id'])->update($attributes);
+                } else {
+                    $problem->testCases()->create($attributes);
+                }
+            }
+
+        });
+
+        ActivityLogger::log(
+            'Judge Problem Updated',
+            "Problem: {$problem->title} ({$problem->testCases()->count()} test cases)",
+            'success',
+            $request
+        );
+
+        return redirect()->route('judge.index')->with('success', 'Problem updated successfully.');
+    }
+
     public function allSubmissions(): View
     {
         $submissions = JudgeSubmission::with(['user:id,name', 'problem:id,title'])
