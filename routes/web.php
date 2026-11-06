@@ -5,6 +5,7 @@ use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\LocalJudgeController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 
@@ -27,7 +28,10 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/users', [NavigationController::class, 'users'])->name('users.index');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::match(['put', 'patch'], '/users/{id}', [UserController::class, 'update'])->whereNumber('id')->name('users.update');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->whereNumber('id')->name('users.destroy');
     Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
     Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
     Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
