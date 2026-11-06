@@ -79,8 +79,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/submit', [SubmissionController::class, 'create'])->name('submissions.create');
-Route::post('/submit', [SubmissionController::class, 'store'])->name('submissions.store');
-Route::post('/submissions/submit', [SubmissionController::class, 'store']);
+Route::get('/labs/submit', [SubmissionController::class, 'create'])->name('labs.submit');
+Route::post('/submit', [LabTaskController::class, 'storeSubmission'])->name('submissions.store');
+Route::post('/submissions/submit', [LabTaskController::class, 'storeSubmission']);
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');
