@@ -30,7 +30,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('judge.index'));
+        return redirect()->route('dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse

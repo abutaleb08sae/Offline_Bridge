@@ -203,7 +203,7 @@ class LocalJudgeTest extends TestCase
         $this->post(route('login.store'), [
             'email' => $admin->email,
             'password' => 'password',
-        ])->assertRedirect(route('judge.index'));
+        ])->assertRedirect(route('dashboard'));
 
         $this->assertAuthenticatedAs($admin);
 
@@ -211,6 +211,20 @@ class LocalJudgeTest extends TestCase
             ->assertRedirect(route('login'));
 
         $this->assertGuest();
+    }
+
+    public function test_login_redirects_to_dashboard_instead_of_a_saved_api_url(): void
+    {
+        $admin = User::factory()->create();
+        $admin->forceFill(['role' => 'admin'])->save();
+
+        $this->get('/api/activities/stream?limit=8')
+            ->assertRedirect(route('login'));
+
+        $this->post(route('login.store'), [
+            'email' => $admin->email,
+            'password' => 'password',
+        ])->assertRedirect(route('dashboard'));
     }
 
     public function test_registration_creates_a_non_admin_user_and_signs_them_in(): void
