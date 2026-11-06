@@ -4,18 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActivityLog extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'client_ip',
+        'user_id',
         'action',
+        'description',
+        'ip_address',
+        'client_ip',
         'details',
         'status',
         'user_agent',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Scope a query to only include recent logs ordered descending.
@@ -49,6 +58,7 @@ class ActivityLog extends Model
         if ($this->details) {
             return "{$this->action} - {$this->details}";
         }
+
         return $this->action;
     }
 
@@ -67,6 +77,7 @@ class ActivityLog extends Model
         if (str_contains($action, 'app') || str_contains($action, 'packet tracer')) {
             return 'Applications';
         }
+
         return 'System';
     }
 
@@ -88,6 +99,7 @@ class ActivityLog extends Model
         if (str_contains($action, 'file') || str_contains($action, 'task') || str_contains($action, 'download') || str_contains($action, 'upload') || str_contains($action, 'solution')) {
             return 'file';
         }
+
         return 'system';
     }
 }
