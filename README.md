@@ -211,6 +211,17 @@ JUDGE_VM_RUNNER="C:\OfflineBridge\judge-vm-runner.exe"
 
 The VM runner is an administrator-installed trust boundary and must enforce network isolation, disposable state, CPU/memory/time limits, and restricted access to host data. The application caps configured problem limits at 10 seconds and 512 MB and validates the runner's response. Student PCs need only access the local OfflineBridge URL.
 
+### Judge Administrator Access
+
+Judge problem creation and submission/code review require an authenticated account with the `admin` role. User accounts default to the `student` role. There is no public account-registration page; provision lab accounts through a trusted process, then promote the intended administrator in `php artisan tinker`:
+
+```php
+$user = \App\Models\User::where('email', 'admin@example.local')->firstOrFail();
+$user->forceFill(['role' => 'admin'])->save();
+```
+
+Administrators sign in at `/login`. Keep administrator credentials private; role changes must only be made by a trusted operator.
+
 ---
 
 ## 📂 Directory Structure

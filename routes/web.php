@@ -5,6 +5,7 @@ use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\LocalJudgeController;
+use App\Http\Controllers\Auth\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,12 @@ Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
 Route::get('/settings', [NavigationController::class, 'settings'])->name('settings.index');
 Route::get('/backup', [NavigationController::class, 'backup'])->name('backup.index');
 
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
+});
+Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
 /*
 |--------------------------------------------------------------------------
 | Offline Local Programming Judge
@@ -31,6 +38,15 @@ Route::prefix('judge')->name('judge.')->group(function () {
     Route::get('/', [LocalJudgeController::class, 'index'])->name('index');
     Route::get('/problem/{id}', [LocalJudgeController::class, 'show'])->whereNumber('id')->name('show');
     Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
+
+    Route::middleware(['auth', 'admin'])->group(function () {
+        Route::get('/problems/create', [LocalJudgeController::class, 'createProblem'])->name('admin.problems.create');
+        Route::post('/problems/store', [LocalJudgeController::class, 'storeProblem'])->name('admin.problems.store');
+        Route::get('/submissions', [LocalJudgeController::class, 'allSubmissions'])->name('admin.submissions');
+        Route::get('/submissions/{submission}', [LocalJudgeController::class, 'showSubmission'])
+            ->whereNumber('submission')
+            ->name('admin.submissions.show');
+    });
 });
 
 /*

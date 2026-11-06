@@ -8,6 +8,7 @@ use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -33,6 +34,66 @@ class LocalJudgeController extends Controller
             'problem' => $problem,
             'sample' => $problem->testCases->first(),
         ]);
+    }
+
+    public function createProblem(): View
+    {
+        return view('judge.admin.create');
+    }
+
+    public function storeProblem(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:20000'],
+            'time_limit' => ['required', 'integer', 'min:1', 'max:10'],
+            'memory_limit' => ['required', 'integer', 'min:64', 'max:512'],
+            'test_cases' => ['required', 'array', 'min:1', 'max:100'],
+            'test_cases.*' => ['required', 'array:input,expected_output'],
+            'test_cases.*.input' => ['present', 'nullable', 'string', 'max:65535'],
+            'test_cases.*.expected_output' => ['present', 'nullable', 'string', 'max:65535'],
+        ]);
+
+        $problem = DB::transaction(function () use ($validated) {
+            $problem = JudgeProblem::create([
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'time_limit' => $validated['time_limit'],
+                'memory_limit' => $validated['memory_limit'],
+            ]);
+
+            $problem->testCases()->createMany(array_map(static fn (array $testCase): array => [
+                'input' => $testCase['input'] ?? '',
+                'expected_output' => $testCase['expected_output'] ?? '',
+            ], $validated['test_cases']));
+
+            return $problem;
+        });
+
+        ActivityLogger::log(
+            'Judge Problem Created',
+            "Problem: {$problem->title} ({$problem->testCases()->count()} test cases)",
+            'success',
+            $request
+        );
+
+        return redirect()->route('judge.show', $problem->id)->with('success', 'Problem created successfully.');
+    }
+
+    public function allSubmissions(): View
+    {
+        $submissions = JudgeSubmission::with(['user:id,name', 'problem:id,title'])
+            ->latest()
+            ->paginate(25);
+
+        return view('judge.admin.submissions', compact('submissions'));
+    }
+
+    public function showSubmission(int $submission): View
+    {
+        $submission = JudgeSubmission::with(['user:id,name', 'problem:id,title'])->findOrFail($submission);
+
+        return view('judge.admin.submission', compact('submission'));
     }
 
     public function submit(Request $request, LocalJudgeRunner $runner): RedirectResponse

@@ -95,6 +95,25 @@
                 <span>Submissions</span>
             </a>
 
+            @auth
+                @if(auth()->user()->isAdmin())
+                    <a href="{{ route('judge.admin.problems.create') }}" class="nav-item {{ request()->routeIs('judge.admin.problems.*') ? 'active' : '' }}">
+                        <span>Manage Judge Problems</span>
+                    </a>
+                    <a href="{{ route('judge.admin.submissions') }}" class="nav-item {{ request()->routeIs('judge.admin.submissions*') ? 'active' : '' }}">
+                        <span>Judge Submissions</span>
+                    </a>
+                @endif
+                <form method="POST" action="{{ route('logout') }}" style="padding: var(--space-2) var(--space-4);">
+                    @csrf
+                    <button class="btn btn-secondary" type="submit">Sign out ({{ auth()->user()->name }})</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="nav-item {{ request()->routeIs('login') ? 'active' : '' }}">
+                    <span>Sign in</span>
+                </a>
+            @endauth
+
             <div class="nav-label">System & Logs</div>
 
             <!-- Activities -->

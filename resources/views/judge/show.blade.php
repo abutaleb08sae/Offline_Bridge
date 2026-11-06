@@ -8,6 +8,12 @@
         <a href="{{ route('judge.index') }}" style="color: var(--primary); text-decoration: none;">&larr; All problems</a>
     </div>
 
+    @if(session('success'))
+        <div class="card" role="status" style="border-color: var(--color-success-text); color: var(--color-success-text);">
+            {{ session('success') }}
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="card" role="alert" style="border-color: var(--color-danger-text); color: var(--color-danger-text);">
             @foreach($errors->all() as $error)
