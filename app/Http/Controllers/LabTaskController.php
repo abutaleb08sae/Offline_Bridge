@@ -22,16 +22,16 @@ class LabTaskController extends Controller
     }
 
     /**
-     * Store a newly uploaded lab task file (.pkt, .pkz, .zip, .pdf).
+     * Store a newly uploaded lab task file (.pkt, .pkz, .pka, .zip, .pdf).
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'lab_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,zip,pdf'],
+            'lab_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,pka,zip,pdf'],
         ], [
-            'lab_file.extensions' => 'The uploaded file must be a Cisco Packet Tracer (.pkt, .pkz), ZIP archive (.zip), or PDF document (.pdf).',
+            'lab_file.extensions' => 'The uploaded file must be a Cisco Packet Tracer (.pkt, .pkz, .pka), ZIP archive (.zip), or PDF document (.pdf).',
             'lab_file.max' => 'The file size cannot exceed 50MB (51,200 KB).',
         ]);
 
@@ -67,9 +67,9 @@ class LabTaskController extends Controller
             'lab_task_id' => 'required|exists:lab_tasks,id',
             'student_name' => 'required|string|max:100',
             'student_id' => 'required|string|max:50',
-            'submission_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,zip,pdf,cpp'],
+            'submission_file' => ['required', 'file', 'max:51200', 'extensions:pkt,pkz,pka,zip,pdf,cpp'],
         ], [
-            'submission_file.extensions' => 'The submission file must be a Packet Tracer file (.pkt, .pkz), ZIP archive (.zip), PDF document (.pdf), or C++ source file (.cpp).',
+            'submission_file.extensions' => 'The submission file must be a Packet Tracer file (.pkt, .pkz, .pka), ZIP archive (.zip), PDF document (.pdf), or C++ source file (.cpp).',
             'submission_file.max' => 'The file size cannot exceed 50MB (51,200 KB).',
         ]);
 
@@ -111,7 +111,9 @@ class LabTaskController extends Controller
 
         ActivityLogger::log('Lab Task Downloaded', "File: {$task->file_name} for {$task->title}", 'info', $request);
 
-        return Storage::disk('public')->download($task->file_path, $task->file_name);
+        return Storage::disk('public')->download($task->file_path, $task->file_name, [
+            'Content-Type' => 'application/octet-stream',
+        ]);
     }
 
     /**

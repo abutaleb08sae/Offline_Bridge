@@ -150,4 +150,63 @@ class LabSubmissionTest extends TestCase
             ->assertDontSee('Upload First Lab Task')
             ->assertDontSee('No teacher-published files are available yet.');
     }
+
+    public function test_admin_can_upload_pka_file_and_user_can_download_it(): void
+    {
+        Storage::fake('public');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $pkaFile = UploadedFile::fake()->create('activity_01.pka', 500, 'application/octet-stream');
+
+        $response = $this->actingAs($admin)
+            ->post(route('labs.store'), [
+                'title' => 'Packet Tracer OSPF Activity',
+                'description' => 'Configure OSPF on Routers',
+                'lab_file' => $pkaFile,
+            ]);
+
+        $response->assertRedirect(route('labs.index'))
+            ->assertSessionHas('success');
+
+        $task = LabTask::firstOrFail();
+        $this->assertSame('Packet Tracer OSPF Activity', $task->title);
+        $this->assertSame('activity_01.pka', $task->file_name);
+        Storage::disk('public')->assertExists($task->file_path);
+
+        // User / student can download the .pka file
+        $student = User::factory()->create(['role' => 'student']);
+        $downloadResponse = $this->actingAs($student)
+            ->get(route('labs.download', $task->id));
+
+        $downloadResponse->assertOk()
+            ->assertHeader('content-disposition', 'attachment; filename=activity_01.pka')
+            ->assertHeader('content-type', 'application/octet-stream');
+    }
+
+    public function test_student_can_submit_pka_solution_file(): void
+    {
+        Storage::fake('submissions');
+        $student = User::factory()->create();
+        $task = LabTask::create([
+            'title' => 'Subnetting Lab',
+            'file_path' => 'labs/subnetting.pka',
+            'file_name' => 'subnetting.pka',
+            'file_size' => 200,
+        ]);
+
+        $pkaSubmission = UploadedFile::fake()->create('solution.pka', 300, 'application/octet-stream');
+
+        $this->actingAs($student)
+            ->post(route('submissions.store'), [
+                'lab_task_id' => $task->id,
+                'student_name' => 'Alice',
+                'student_id' => 'ST-99',
+                'submission_file' => $pkaSubmission,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('PKA', $submission->file_extension);
+        Storage::disk('submissions')->assertExists($submission->file_path);
+    }
 }

@@ -49,7 +49,7 @@
     <div class="card">
         <div class="card-header">
             <div>
-                <h3 class="card-title">Upload New Lab Task (.pkt / .pkz)</h3>
+                <h3 class="card-title">Upload New Lab Task (.pkt / .pkz / .pka)</h3>
                 <p class="card-subtitle">
                     Distribute Cisco Packet Tracer topologies, network assignments, or instructional guides to offline LAN workstations
                 </p>
@@ -80,10 +80,10 @@
                 <!-- Drag & Drop File Upload Area -->
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">
-                        Lab File (.pkt, .pkz, .zip, .pdf) <span style="color: var(--color-danger);">*</span>
+                        Lab File (.pkt, .pkz, .pka, .zip, .pdf) <span style="color: var(--color-danger);">*</span>
                     </label>
 
-                    <input type="file" name="lab_file" id="labFileInput" accept=".pkt,.pkz,.zip,.pdf" required style="display: none;" onchange="handleFilePicked(this)">
+                    <input type="file" name="lab_file" id="labFileInput" accept=".pkt,.pkz,.pka,.zip,.pdf" required style="display: none;" onchange="handleFilePicked(this)">
 
                     <div class="upload-dropzone" id="dropzoneBox" onclick="document.getElementById('labFileInput').click()" style="cursor: pointer; text-align: center; border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: var(--space-6); transition: all 0.2s ease;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="upload-dropzone-icon" style="width: 44px; height: 44px; margin: 0 auto var(--space-2); color: var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -95,7 +95,7 @@
                                 Click to choose or drag & drop file here
                             </h4>
                             <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-2);">
-                                Supported formats: <strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>, <strong>.zip</strong>, <strong>.pdf</strong> (Max file size: 50MB)
+                                Supported formats: <strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>, <strong style="color: var(--primary);">.pka</strong>, <strong>.zip</strong>, <strong>.pdf</strong> (Max file size: 50MB)
                             </p>
                             <span class="badge badge-neutral" style="font-size: 0.7rem;">
                                 Binary / Octet-Stream Verified for Offline LAN
@@ -124,7 +124,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" id="btnUploadIcon" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <span id="btnUploadText">Upload Lab Task (.pkt)</span>
+                    <span id="btnUploadText">Upload Lab Task</span>
                 </button>
             </div>
         </form>
@@ -222,7 +222,7 @@
                                 </td>
                                 <td>
                                     <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                        @if(in_array($ext, ['pkt', 'pkz']))
+                                        @if(in_array(strtolower($ext), ['pkt', 'pkz', 'pka']))
                                             <span class="badge badge-success" style="font-family: monospace; font-size: 0.65rem;">.{{ strtoupper($ext) }}</span>
                                         @elseif($ext === 'pdf')
                                             <span class="badge badge-danger" style="font-family: monospace; font-size: 0.65rem;">PDF</span>

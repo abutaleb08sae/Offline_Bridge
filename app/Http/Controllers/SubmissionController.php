@@ -60,6 +60,8 @@ class SubmissionController extends Controller
             request()
         );
 
-        return Storage::disk($disk)->download($submission->file_path, basename($submission->file_path));
+        return Storage::disk($disk)->download($submission->file_path, basename($submission->file_path), [
+            'Content-Type' => 'application/octet-stream',
+        ]);
     }
 }

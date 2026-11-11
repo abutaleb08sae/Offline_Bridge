@@ -92,7 +92,7 @@
                     Lab Solution Submission Portal
                 </h2>
                 <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0; line-height: 1.5;">
-                    Upload your completed Cisco Packet Tracer activity topology (<strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>) or ZIP archive to Master PC over the offline LAN.
+                    Upload your completed Cisco Packet Tracer activity topology (<strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>, <strong style="color: var(--primary);">.pka</strong>) or ZIP archive to Master PC over the offline LAN.
                 </p>
             </div>
 
@@ -142,10 +142,10 @@
                     <!-- Solution File Dropzone -->
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">
-                            Solution File (.pkt, .pkz, .zip, .pdf, .cpp) <span style="color: var(--color-danger);">*</span>
+                            Solution File (.pkt, .pkz, .pka, .zip, .pdf, .cpp) <span style="color: var(--color-danger);">*</span>
                         </label>
 
-                        <input type="file" name="submission_file" id="submissionFileInput" accept=".pkt,.pkz,.zip,.pdf,.cpp" required style="display: none;" onchange="handleFileSelected(this)">
+                        <input type="file" name="submission_file" id="submissionFileInput" accept=".pkt,.pkz,.pka,.zip,.pdf,.cpp" required style="display: none;" onchange="handleFileSelected(this)">
 
                         <div class="upload-dropzone" id="submissionDropzone" onclick="document.getElementById('submissionFileInput').click()" style="cursor: pointer; text-align: center; border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: var(--space-6); transition: all 0.2s ease;">
                             <svg xmlns="http://www.w3.org/2000/svg" class="upload-dropzone-icon" style="width: 40px; height: 40px; margin: 0 auto var(--space-2); color: var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -157,7 +157,7 @@
                                     Click to browse or drop your solution file
                                 </h4>
                                 <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">
-                                    Accepted: <strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>, <strong>.zip</strong>, <strong>.pdf</strong>, <strong>.cpp</strong> (Max: 50MB)
+                                    Accepted: <strong style="color: var(--primary);">.pkt</strong>, <strong style="color: var(--primary);">.pkz</strong>, <strong style="color: var(--primary);">.pka</strong>, <strong>.zip</strong>, <strong>.pdf</strong>, <strong>.cpp</strong> (Max: 50MB)
                                 </p>
                             </div>
 

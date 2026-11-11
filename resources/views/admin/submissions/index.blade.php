@@ -181,8 +181,8 @@
                                 <!-- 5. File Details -->
                                 <td>
                                     <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                        @if(in_array($sub->file_extension, ['PKT', 'PKZ']))
-                                            <span class="badge badge-success" style="font-size: 0.65rem; font-family: monospace;">.{{ $sub->file_extension }}</span>
+                                        @if(in_array(strtoupper($sub->file_extension), ['PKT', 'PKZ', 'PKA']))
+                                            <span class="badge badge-success" style="font-size: 0.65rem; font-family: monospace;">.{{ strtoupper($sub->file_extension) }}</span>
                                         @elseif($sub->file_extension === 'ZIP')
                                             <span class="badge badge-warning" style="font-size: 0.65rem; font-family: monospace;">ZIP</span>
                                         @elseif($sub->file_extension === 'PDF')
