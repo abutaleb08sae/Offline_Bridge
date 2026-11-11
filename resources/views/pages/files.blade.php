@@ -256,6 +256,16 @@
                                         </a>
 
                                         @if(auth()->check() && auth()->user()->role === 'admin')
+                                        <!-- Batch Download Submissions (.zip) Button -->
+                                        <a href="{{ route('admin.tasks.downloadAll', $task->id) }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.65rem; font-size: var(--font-size-xs); text-decoration: none;" title="Download All Student Submissions (.zip)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="7 10 12 15 17 10"/>
+                                                <line x1="12" y1="15" x2="12" y2="3"/>
+                                            </svg>
+                                            <span>Download All (.zip)</span>
+                                        </a>
+
                                         <!-- Delete Button Form -->
                                         <form action="{{ route('labs.destroy', $task->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'{{ addslashes($task->title) }}\'?\n\n@if(isset($task->submissions_count) && $task->submissions_count > 0)WARNING: This task has {{ $task->submissions_count }} student submission(s) which will also be removed from storage!\n\n@endif This will remove the file from Master storage.');" style="display: inline;">
                                             @csrf

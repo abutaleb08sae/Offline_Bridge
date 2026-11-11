@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Submission;
 use App\Models\JudgeSubmission;
 use App\Models\ActivityLog;
 use App\Services\ActivityLogger;
@@ -109,6 +110,9 @@ class UserController extends Controller
         // Safely handle foreign key references before deleting user
         try {
             DB::transaction(function () use ($user) {
+                // Nullify user references in lab submissions if any
+                Submission::where('user_id', $user->id)->update(['user_id' => null]);
+
                 // Nullify user references in judge submissions if any
                 JudgeSubmission::where('user_id', $user->id)->update(['user_id' => null]);
 

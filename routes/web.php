@@ -89,6 +89,8 @@ Route::post('/submissions/submit', [LabTaskController::class, 'storeSubmission']
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');
+    Route::get('/admin/tasks/{id}/download-all', [SubmissionController::class, 'batchDownload'])
+        ->name('admin.tasks.downloadAll');
 });
 
 /*

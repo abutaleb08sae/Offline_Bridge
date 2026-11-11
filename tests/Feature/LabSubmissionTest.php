@@ -209,4 +209,77 @@ class LabSubmissionTest extends TestCase
         $this->assertSame('PKA', $submission->file_extension);
         Storage::disk('submissions')->assertExists($submission->file_path);
     }
+
+    public function test_admin_can_batch_download_all_submissions_as_zip(): void
+    {
+        Storage::fake('submissions');
+        $admin = User::factory()->create(['role' => 'admin']);
+        $task = LabTask::create([
+            'title' => 'Routing Assignment',
+            'file_path' => 'labs/routing.pka',
+            'file_name' => 'routing.pka',
+            'file_size' => 200,
+        ]);
+
+        $file1 = 'submissions/test_student_1_routing.pka';
+        $file2 = 'submissions/test_student_2_routing.pkt';
+        Storage::disk('submissions')->put($file1, 'fake pka content');
+        Storage::disk('submissions')->put($file2, 'fake pkt content');
+
+        Submission::create([
+            'lab_task_id' => $task->id,
+            'student_name' => 'Student One',
+            'student_id' => 'ST-001',
+            'client_ip' => '192.168.1.50',
+            'file_path' => $file1,
+        ]);
+
+        Submission::create([
+            'lab_task_id' => $task->id,
+            'student_name' => 'Student Two',
+            'student_id' => 'ST-002',
+            'client_ip' => '192.168.1.51',
+            'file_path' => $file2,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.tasks.downloadAll', $task->id));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/zip');
+    }
+
+    public function test_batch_download_returns_error_when_no_submissions_exist(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $task = LabTask::create([
+            'title' => 'Empty Lab Task',
+            'file_path' => 'labs/empty.pka',
+            'file_name' => 'empty.pka',
+            'file_size' => 100,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->from(route('labs.index'))
+            ->get(route('admin.tasks.downloadAll', $task->id));
+
+        $response->assertRedirect(route('labs.index'))
+            ->assertSessionHas('error', 'No submissions found for this lab task.');
+    }
+
+    public function test_non_admin_cannot_access_batch_download(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $task = LabTask::create([
+            'title' => 'Secured Task',
+            'file_path' => 'labs/secured.pka',
+            'file_name' => 'secured.pka',
+            'file_size' => 100,
+        ]);
+
+        $response = $this->actingAs($student)
+            ->get(route('admin.tasks.downloadAll', $task->id));
+
+        $response->assertForbidden();
+    }
 }
