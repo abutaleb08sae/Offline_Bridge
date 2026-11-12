@@ -16,6 +16,38 @@
         <a href="{{ route('judge.admin.submissions') }}" class="btn btn-secondary">View submissions</a>
     </div>
 
+    <details class="card" id="problemImport" open>
+        <summary style="cursor: pointer; font-weight: 600;">Auto-Generate an Original Problem from a Link (LeetCode / Codeforces / Online Judge)</summary>
+        <p style="color: var(--text-muted);">Only public page title and summary metadata are sent to Gemini. It creates a new problem in original wording with generated test cases; source statements and sample cases are not copied. Review the draft before sharing.</p>
+        <form method="POST" action="{{ route('judge.admin.problems.import') }}" data-import-form style="display: flex; flex-direction: column; gap: var(--space-3);">
+            @csrf
+            <div>
+                <label class="form-label" for="import_url">Problem URL</label>
+                <input class="form-input" id="import_url" name="url" type="url" placeholder="Paste problem URL e.g., https://leetcode.com/problems/two-sum/" value="{{ old('url') }}" maxlength="2048" required>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3);">
+                <div>
+                    <label class="form-label" for="import_start_time">Contest Start Time (optional)</label>
+                    <input class="form-input" id="import_start_time" name="start_time" type="datetime-local" value="{{ old('start_time') }}">
+                </div>
+                <div>
+                    <label class="form-label" for="import_end_time">Contest End Time (optional)</label>
+                    <input class="form-input" id="import_end_time" name="end_time" type="datetime-local" value="{{ old('end_time') }}">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" type="submit" data-import-button>
+                    <span data-import-label>Import &amp; Generate Problem</span>
+                    <span data-import-spinner hidden aria-hidden="true" style="width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: middle; animation: import-spin 0.8s linear infinite;"></span>
+                </button>
+            </div>
+        </form>
+    </details>
+
+    @if(session('success'))
+        <div class="card" role="status" style="border-color: var(--color-success-text); color: var(--color-success-text);">{{ session('success') }}</div>
+    @endif
+
     @if($errors->any())
         <div class="card" role="alert" style="border-color: var(--color-danger-text); color: var(--color-danger-text);">
             @foreach($errors->all() as $error)
@@ -79,6 +111,27 @@
         </div>
     </form>
 </div>
+
+<style>
+    @keyframes import-spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+    (() => {
+        const importPanel = document.getElementById('problemImport');
+        if (window.location.hash === '#problemImport') importPanel.open = true;
+
+        const form = document.querySelector('[data-import-form]');
+        form.addEventListener('submit', () => {
+            const button = form.querySelector('[data-import-button]');
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            form.querySelector('[data-import-label]').textContent = 'Fetching page and generating draft…';
+            const spinner = form.querySelector('[data-import-spinner]');
+            spinner.hidden = false;
+            spinner.style.display = 'inline-block';
+        });
+    })();
+</script>
 
 <template id="testCaseTemplate">
     <fieldset style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: var(--space-3);">

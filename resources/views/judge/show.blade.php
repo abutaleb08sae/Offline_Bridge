@@ -3,6 +3,37 @@
 @section('title', $problem->title)
 
 @section('content')
+<style>
+    .problem-statement { white-space: normal; }
+    .problem-statement p { margin: 0 0 0.65rem; }
+    .problem-statement p:empty { display: none; }
+    .problem-statement ul,
+    .problem-statement ol {
+        margin: 0 0 var(--space-3);
+        padding-left: 1.5rem;
+    }
+    .problem-statement ul { list-style: disc; }
+    .problem-statement ol { list-style: decimal; }
+    .problem-statement li { margin-bottom: var(--space-1); }
+    .problem-statement pre {
+        margin: 0.5rem 0 1rem;
+        padding: 0.75rem 1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+    .problem-statement code {
+        padding: 0.1em 0.3em;
+        background: var(--bg-body);
+        border-radius: var(--radius-sm);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        overflow-wrap: anywhere;
+    }
+    .problem-statement pre code { padding: 0; background: transparent; }
+</style>
 @php
     $serverNow = now();
     $isUpcoming = $problem->isUpcoming($serverNow);
@@ -65,16 +96,16 @@
                 <h2 id="problem-title" style="margin: 0; color: var(--text-main);">{{ $problem->title }}</h2>
                 <span class="badge badge-neutral">{{ $problem->time_limit }} sec / {{ $problem->memory_limit }} MB</span>
             </div>
-            <div style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main);">{{ $problem->description }}</div>
+            <div class="problem-description problem-statement" style="line-height: 1.6; color: var(--text-main);">{!! $descriptionHtml !!}</div>
 
-            @if($sample)
+            @foreach($sampleCases as $index => $sample)
                 <div style="margin-top: var(--space-5);">
-                    <h3 style="margin-bottom: var(--space-2);">Sample input</h3>
+                    <h3 style="margin-bottom: var(--space-2);">Sample Input {{ $index + 1 }}</h3>
                     <pre style="white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); background: var(--bg-body); border-radius: var(--radius-md);">{{ $sample->input }}</pre>
-                    <h3 style="margin: var(--space-4) 0 var(--space-2);">Sample output</h3>
+                    <h3 style="margin: var(--space-4) 0 var(--space-2);">Sample Output {{ $index + 1 }}</h3>
                     <pre style="white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); background: var(--bg-body); border-radius: var(--radius-md);">{{ $sample->expected_output }}</pre>
                 </div>
-            @endif
+            @endforeach
         </section>
 
         <section class="card" aria-labelledby="submission-title">

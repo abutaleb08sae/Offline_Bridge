@@ -6,6 +6,8 @@ use App\Models\JudgeProblem;
 use App\Models\JudgeSubmission;
 use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
+use App\Services\ProblemStatementSanitizer;
+use App\Services\ProblemUrlImporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,13 +30,14 @@ class LocalJudgeController extends Controller
         ]);
     }
 
-    public function show(int $id): View
+    public function show(int $id, ProblemStatementSanitizer $sanitizer): View
     {
         $problem = JudgeProblem::with('testCases')->findOrFail($id);
 
         return view('judge.show', [
             'problem' => $problem,
-            'sample' => $problem->testCases->first(),
+            'sampleCases' => $problem->testCases->take(2),
+            'descriptionHtml' => $sanitizer->sanitize($problem->description),
         ]);
     }
 
@@ -84,6 +87,41 @@ class LocalJudgeController extends Controller
         );
 
         return redirect()->route('judge.show', $problem->id)->with('success', 'Problem created successfully.');
+    }
+
+    public function importProblem(Request $request, ProblemUrlImporter $importer): RedirectResponse
+    {
+        $validated = $this->validateSchedule($request->validate([
+            'url' => ['required', 'string', 'url', 'max:2048'],
+            'start_time' => ['nullable', 'date'],
+            'end_time' => ['nullable', 'date'],
+        ]));
+
+        $generated = $importer->generate($validated['url']);
+        $problem = DB::transaction(function () use ($generated, $validated): JudgeProblem {
+            $problem = JudgeProblem::create([
+                'title' => $generated['title'],
+                'description' => $generated['description'],
+                'time_limit' => $generated['time_limit'],
+                'memory_limit' => $generated['memory_limit'],
+                'start_time' => $validated['start_time'] ?? null,
+                'end_time' => $validated['end_time'] ?? null,
+            ]);
+
+            $problem->testCases()->createMany($generated['test_cases']);
+
+            return $problem;
+        });
+
+        ActivityLogger::log(
+            'Judge Problem Imported',
+            "Problem: {$problem->title} ({$problem->testCases()->count()} test cases)",
+            'success',
+            $request
+        );
+
+        return redirect()->route('judge.problems.edit', $problem->id)
+            ->with('success', 'An imported problem draft was created. Review its statement and test cases before publishing.');
     }
 
     public function editProblem(int $id): View

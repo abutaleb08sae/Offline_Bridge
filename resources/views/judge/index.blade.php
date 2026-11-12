@@ -10,6 +10,12 @@
                 <h2 class="card-title">Local Programming Judge</h2>
                 <p class="card-subtitle">Solve programming problems on the OfflineBridge LAN.</p>
             </div>
+            @if(auth()->check() && auth()->user()->role === 'admin')
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                    <a class="btn btn-secondary" href="{{ route('judge.admin.problems.create') }}#problemImport">Import via URL</a>
+                    <a class="btn btn-primary" href="{{ route('judge.admin.problems.create') }}">Create Problem</a>
+                </div>
+            @endif
         </div>
 
         @if(session('success'))

@@ -39,6 +39,84 @@ class LocalJudgeTest extends TestCase
             ->assertSee('Submit Code');
     }
 
+    public function test_student_problem_page_renders_encoded_safe_html_and_strips_scripts(): void
+    {
+        $problem = JudgeProblem::create([
+            'title' => 'Formatted statement',
+            'description' => '&amp;lt;p&amp;gt;Use &amp;lt;code&amp;gt;x &amp;amp;lt;= 5&amp;lt;/code&amp;gt;.&amp;lt;/p&amp;gt;&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;&amp;lt;ul&amp;gt;&amp;lt;li&amp;gt;First item&amp;lt;/li&amp;gt;&amp;lt;/ul&amp;gt;',
+        ]);
+
+        $this->get(route('judge.show', $problem->id))
+            ->assertOk()
+            ->assertSee('<p>Use <code>x &lt;= 5</code>.</p>', false)
+            ->assertSee('<ul><li>First item</li></ul>', false)
+            ->assertDontSee('alert(1)');
+    }
+
+    public function test_student_problem_statement_collapses_empty_paragraphs_and_uses_normal_whitespace(): void
+    {
+        $problem = JudgeProblem::create([
+            'title' => 'Compact statement',
+            'description' => '<p>First paragraph.</p><p>&nbsp;</p><p>   </p><pre>line one
+line two</pre>',
+        ]);
+
+        $this->get(route('judge.show', $problem->id))
+            ->assertOk()
+            ->assertSee('class="problem-description problem-statement" style="line-height:', false)
+            ->assertSee('<p>First paragraph.</p><pre>line one', false)
+            ->assertDontSee('<p>&nbsp;</p>', false)
+            ->assertDontSee('<p>   </p>', false);
+    }
+
+    public function test_student_problem_page_shows_at_most_two_sample_cases_and_hides_remaining_cases(): void
+    {
+        $problem = JudgeProblem::create([
+            'title' => 'Multiple samples',
+            'description' => 'A problem with hidden judge cases.',
+        ]);
+        foreach ([
+            ['input' => 'sample input one', 'expected_output' => 'sample output one'],
+            ['input' => 'sample input two', 'expected_output' => 'sample output two'],
+            ['input' => 'hidden input three', 'expected_output' => 'hidden output three'],
+        ] as $testCase) {
+            $problem->testCases()->create($testCase);
+        }
+
+        $this->get(route('judge.show', $problem->id))
+            ->assertOk()
+            ->assertSee('Sample Input 1')
+            ->assertSee('Sample Output 1')
+            ->assertSee('sample input one')
+            ->assertSee('sample output one')
+            ->assertSee('Sample Input 2')
+            ->assertSee('Sample Output 2')
+            ->assertSee('sample input two')
+            ->assertSee('sample output two')
+            ->assertDontSee('hidden input three')
+            ->assertDontSee('hidden output three');
+    }
+
+    public function test_student_problem_page_supports_a_single_sample_case(): void
+    {
+        $problem = JudgeProblem::create([
+            'title' => 'Single sample',
+            'description' => 'A problem with one sample.',
+        ]);
+        $problem->testCases()->create([
+            'input' => 'only sample input',
+            'expected_output' => 'only sample output',
+        ]);
+
+        $this->get(route('judge.show', $problem->id))
+            ->assertOk()
+            ->assertSee('Sample Input 1')
+            ->assertSee('Sample Output 1')
+            ->assertSee('only sample input')
+            ->assertSee('only sample output')
+            ->assertDontSee('Sample Input 2');
+    }
+
     public function test_forbidden_command_pattern_is_saved_as_security_violation(): void
     {
         $problem = JudgeProblem::create([

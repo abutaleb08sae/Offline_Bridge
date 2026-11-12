@@ -54,6 +54,7 @@ Route::prefix('judge')->name('judge.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/problems/create', [LocalJudgeController::class, 'createProblem'])->name('admin.problems.create');
         Route::post('/problems/store', [LocalJudgeController::class, 'storeProblem'])->name('admin.problems.store');
+        Route::post('/problems/import', [LocalJudgeController::class, 'importProblem'])->middleware('throttle:5,1')->name('admin.problems.import');
         Route::get('/problems/{id}/edit', [LocalJudgeController::class, 'editProblem'])
             ->whereNumber('id')
             ->name('problems.edit');
