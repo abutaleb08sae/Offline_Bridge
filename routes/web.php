@@ -61,6 +61,9 @@ Route::prefix('judge')->name('judge.')->group(function () {
         Route::match(['put', 'patch'], '/problems/{id}', [LocalJudgeController::class, 'updateProblem'])
             ->whereNumber('id')
             ->name('problems.update');
+        Route::delete('/problems/{id}', [LocalJudgeController::class, 'destroyProblem'])
+            ->whereNumber('id')
+            ->name('admin.problems.destroy');
         Route::get('/submissions', [LocalJudgeController::class, 'allSubmissions'])->name('admin.submissions');
         Route::get('/submissions/{submission}', [LocalJudgeController::class, 'showSubmission'])
             ->whereNumber('submission')

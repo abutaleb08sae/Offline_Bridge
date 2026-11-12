@@ -352,6 +352,58 @@ line two</pre>',
             ->assertSee(route('judge.problems.edit', $problem->id));
     }
 
+    public function test_admin_can_delete_problem_with_test_cases_and_submissions(): void
+    {
+        $admin = User::factory()->create();
+        $admin->forceFill(['role' => 'admin'])->save();
+        $this->actingAs($admin);
+
+        $problem = JudgeProblem::create([
+            'title' => 'Problem to delete',
+            'description' => 'This problem and its children should be removed.',
+        ]);
+        $testCase = $problem->testCases()->create([
+            'input' => '1',
+            'expected_output' => '1',
+        ]);
+        $submission = $problem->submissions()->create([
+            'user_id' => $admin->id,
+            'language' => 'cpp',
+            'code' => 'int main() {}',
+            'verdict' => 'Accepted',
+        ]);
+
+        $this->get(route('judge.index'))
+            ->assertOk()
+            ->assertSee('Delete')
+            ->assertSee(route('judge.admin.problems.destroy', $problem->id))
+            ->assertSee('name="_method" value="DELETE"', false)
+            ->assertSee('Are you sure you want to delete this problem and all its test cases?');
+
+        $this->delete(route('judge.admin.problems.destroy', $problem->id))
+            ->assertRedirect(route('judge.index'))
+            ->assertSessionHas('success', 'Problem deleted successfully.');
+
+        $this->assertDatabaseMissing('judge_problems', ['id' => $problem->id]);
+        $this->assertDatabaseMissing('judge_test_cases', ['id' => $testCase->id]);
+        $this->assertDatabaseMissing('judge_submissions', ['id' => $submission->id]);
+    }
+
+    public function test_non_admin_cannot_delete_judge_problem(): void
+    {
+        $user = User::factory()->create();
+        $problem = JudgeProblem::create([
+            'title' => 'Protected problem',
+            'description' => 'Only admins may delete this.',
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('judge.admin.problems.destroy', $problem->id))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('judge_problems', ['id' => $problem->id]);
+    }
+
     public function test_admin_can_log_in_and_log_out(): void
     {
         $admin = User::factory()->create();

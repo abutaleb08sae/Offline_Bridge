@@ -61,6 +61,14 @@
                                     <a class="btn btn-primary" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
                                     @if(auth()->check() && auth()->user()->role === 'admin')
                                         <a class="btn btn-secondary" href="{{ route('judge.problems.edit', $problem->id) }}">Edit Problem</a>
+                                        <form method="POST"
+                                              action="{{ route('judge.admin.problems.destroy', $problem->id) }}"
+                                              onsubmit="return confirm('Are you sure you want to delete this problem and all its test cases?');"
+                                              style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="btn btn-danger" type="submit">Delete</button>
+                                        </form>
                                     @endif
                                 </td>
                             </tr>

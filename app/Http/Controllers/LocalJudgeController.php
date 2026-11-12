@@ -194,6 +194,29 @@ class LocalJudgeController extends Controller
         return redirect()->route('judge.index')->with('success', 'Problem updated successfully.');
     }
 
+    public function destroyProblem(Request $request, int $id): RedirectResponse
+    {
+        $title = DB::transaction(function () use ($id): string {
+            $problem = JudgeProblem::findOrFail($id);
+            $title = $problem->title;
+
+            $problem->testCases()->delete();
+            $problem->submissions()->delete();
+            $problem->delete();
+
+            return $title;
+        });
+
+        ActivityLogger::log(
+            'Judge Problem Deleted',
+            "Problem: {$title}",
+            'success',
+            $request
+        );
+
+        return redirect()->route('judge.index')->with('success', 'Problem deleted successfully.');
+    }
+
     public function allSubmissions(): View
     {
         $submissions = JudgeSubmission::with(['user:id,name', 'problem:id,title'])
