@@ -16,6 +16,7 @@
         <a href="{{ route('judge.admin.submissions') }}" class="btn btn-secondary">View submissions</a>
     </div>
 
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: var(--space-4); align-items: start;">
     <details class="card" id="problemImport" open>
         <summary style="cursor: pointer; font-weight: 600;">Auto-Generate an Original Problem from a Link (LeetCode / Codeforces / Online Judge)</summary>
         <p style="color: var(--text-muted);">Only public page title and summary metadata are sent to Gemini. It creates a new problem in original wording with generated test cases; source statements and sample cases are not copied. Review the draft before sharing.</p>
@@ -43,6 +44,32 @@
             </div>
         </form>
     </details>
+
+    <details class="card" id="uvaPdfImport" open>
+        <summary style="cursor: pointer; font-weight: 600;">Auto-Generate a PDF Contest Problem from a Link (UVa Online Judge / PDF)</summary>
+        <p style="color: var(--text-muted);">Import an official UVa problem or a direct PDF link, then review the generated judge test cases before sharing.</p>
+        <form method="POST" action="{{ route('judge.admin.problems.importPdfUrl') }}" style="display: flex; flex-direction: column; gap: var(--space-3);">
+            @csrf
+            <div>
+                <label class="form-label" for="uva_import_url">Problem URL</label>
+                <input class="form-input" id="uva_import_url" name="pdf_url" type="url" placeholder="Paste UVa or PDF URL e.g., https://onlinejudge.org/external/1/100.pdf" value="{{ old('pdf_url') }}" maxlength="2048" required>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3);">
+                <div>
+                    <label class="form-label" for="uva_contest_start_time">Contest Start Time (optional)</label>
+                    <input class="form-input" id="uva_contest_start_time" name="contest_start_time" type="datetime-local" value="{{ old('contest_start_time') }}">
+                </div>
+                <div>
+                    <label class="form-label" for="uva_contest_end_time">Contest End Time (optional)</label>
+                    <input class="form-input" id="uva_contest_end_time" name="contest_end_time" type="datetime-local" value="{{ old('contest_end_time') }}">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" type="submit">Import &amp; Generate PDF Problem</button>
+            </div>
+        </form>
+    </details>
+    </div>
 
     @if(session('success'))
         <div class="card" role="status" style="border-color: var(--color-success-text); color: var(--color-success-text);">{{ session('success') }}</div>

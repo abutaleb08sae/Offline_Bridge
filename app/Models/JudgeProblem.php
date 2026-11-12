@@ -15,6 +15,8 @@ class JudgeProblem extends Model
         'memory_limit',
         'start_time',
         'end_time',
+        'pdf_path',
+        'images',
     ];
 
     protected function casts(): array
@@ -22,6 +24,7 @@ class JudgeProblem extends Model
         return [
             'start_time' => 'datetime',
             'end_time' => 'datetime',
+            'images' => 'array',
         ];
     }
 

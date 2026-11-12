@@ -13,8 +13,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
+use Throwable;
 
 class LocalJudgeController extends Controller
 {
@@ -33,11 +37,16 @@ class LocalJudgeController extends Controller
     public function show(int $id, ProblemStatementSanitizer $sanitizer): View
     {
         $problem = JudgeProblem::with('testCases')->findOrFail($id);
+        $hasPdf = is_string($problem->pdf_path)
+            && str_starts_with($problem->pdf_path, 'problem-pdfs/')
+            && ! str_contains($problem->pdf_path, '..')
+            && Storage::disk('public')->exists($problem->pdf_path);
 
         return view('judge.show', [
             'problem' => $problem,
             'sampleCases' => $problem->testCases->take(2),
             'descriptionHtml' => $sanitizer->sanitize($problem->description),
+            'hasPdf' => $hasPdf,
         ]);
     }
 
@@ -98,20 +107,38 @@ class LocalJudgeController extends Controller
         ]));
 
         $generated = $importer->generate($validated['url']);
-        $problem = DB::transaction(function () use ($generated, $validated): JudgeProblem {
-            $problem = JudgeProblem::create([
-                'title' => $generated['title'],
-                'description' => $generated['description'],
-                'time_limit' => $generated['time_limit'],
-                'memory_limit' => $generated['memory_limit'],
-                'start_time' => $validated['start_time'] ?? null,
-                'end_time' => $validated['end_time'] ?? null,
-            ]);
+        $pdfContents = $generated['pdf_contents'] ?? null;
+        $problemNumber = $generated['problem_number'] ?? null;
+        unset($generated['pdf_contents'], $generated['problem_number']);
+        $pdfPath = null;
+        try {
+            $problem = DB::transaction(function () use ($generated, $validated, $pdfContents, $problemNumber, &$pdfPath): JudgeProblem {
+                $problem = JudgeProblem::create([
+                    'title' => $generated['title'],
+                    'description' => $generated['description'],
+                    'time_limit' => $generated['time_limit'],
+                    'memory_limit' => $generated['memory_limit'],
+                    'start_time' => $validated['start_time'] ?? null,
+                    'end_time' => $validated['end_time'] ?? null,
+                ]);
 
-            $problem->testCases()->createMany($generated['test_cases']);
+                $problem->testCases()->createMany($generated['test_cases']);
+                if (is_string($pdfContents) && is_string($problemNumber)) {
+                    $pdfPath = 'problem-pdfs/uva_'.$problemNumber.'_'.Str::uuid().'.pdf';
+                    if (! Storage::disk('public')->put($pdfPath, $pdfContents)) {
+                        throw new RuntimeException('Unable to store the official UVa PDF.');
+                    }
+                    $problem->update(['pdf_path' => $pdfPath]);
+                }
 
-            return $problem;
-        });
+                return $problem;
+            });
+        } catch (Throwable $exception) {
+            if ($pdfPath !== null) {
+                Storage::disk('public')->delete($pdfPath);
+            }
+            throw $exception;
+        }
 
         ActivityLogger::log(
             'Judge Problem Imported',
@@ -196,6 +223,12 @@ class LocalJudgeController extends Controller
 
     public function destroyProblem(Request $request, int $id): RedirectResponse
     {
+        $problem = JudgeProblem::findOrFail($id);
+        $assetPaths = array_filter([
+            $problem->pdf_path,
+            ...($problem->images ?? []),
+        ], static fn (mixed $path): bool => is_string($path) && $path !== '');
+
         $title = DB::transaction(function () use ($id): string {
             $problem = JudgeProblem::findOrFail($id);
             $title = $problem->title;
@@ -206,6 +239,15 @@ class LocalJudgeController extends Controller
 
             return $title;
         });
+
+        foreach ($assetPaths as $path) {
+            if ((str_starts_with($path, 'problem-pdfs/') || str_starts_with($path, 'problem-images/'))
+                && ! str_contains($path, '..')
+                && ! str_contains($path, '\\')
+                && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
 
         ActivityLogger::log(
             'Judge Problem Deleted',

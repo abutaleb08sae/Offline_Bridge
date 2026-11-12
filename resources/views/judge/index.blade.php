@@ -35,6 +35,7 @@
                             <th style="padding: var(--space-3);">Time limit</th>
                             <th style="padding: var(--space-3);">Memory limit</th>
                             <th style="padding: var(--space-3);">Test cases</th>
+                            <th style="padding: var(--space-3);">PDF</th>
                             <th style="padding: var(--space-3);"><span class="sr-only">Action</span></th>
                         </tr>
                     </thead>
@@ -57,6 +58,21 @@
                                 <td style="padding: var(--space-3);">{{ $problem->time_limit }} sec</td>
                                 <td style="padding: var(--space-3);">{{ $problem->memory_limit }} MB</td>
                                 <td style="padding: var(--space-3);">{{ $problem->test_cases_count }}</td>
+                                <td style="padding: var(--space-3);">
+                                    <span class="badge {{ $problem->pdf_path ? 'badge-success' : 'badge-neutral' }}">
+                                        {{ $problem->pdf_path ? 'PDF Ready' : 'No PDF' }}
+                                    </span>
+                                    @if($problem->pdf_path)
+                                        <a class="btn btn-secondary" href="{{ route('judge.problem.pdf', $problem->id) }}" target="_blank" rel="noopener">PDF</a>
+                                        @if(auth()->check() && auth()->user()->role === 'admin')
+                                            <form method="POST" action="{{ route('judge.admin.problems.media.pdf.remove', $problem->id) }}" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-secondary" type="submit">Remove PDF</button>
+                                            </form>
+                                        @endif
+                                    @endif
+                                </td>
                                 <td style="padding: var(--space-3); text-align: right;">
                                     <a class="btn btn-primary" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
                                     @if(auth()->check() && auth()->user()->role === 'admin')

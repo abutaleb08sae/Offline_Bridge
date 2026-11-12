@@ -92,6 +92,16 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: var(--space-4); align-items: start;">
         <section class="card" aria-labelledby="problem-title">
+            @if($hasPdf)
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-3);">
+                    <button class="btn btn-primary" type="button" data-problem-view="pdf" aria-pressed="true">UVa PDF View</button>
+                    <button class="btn btn-secondary" type="button" data-problem-view="html" aria-pressed="false">HTML View</button>
+                </div>
+                <div data-problem-pdf>
+                    <iframe src="{{ asset('storage/'.$problem->pdf_path) }}#toolbar=1&amp;view=FitH" title="UVa problem PDF" class="w-100" style="width: 100%; height: 82vh; border: none; border-radius: 8px;"></iframe>
+                </div>
+                <div data-problem-html hidden>
+            @endif
             <div style="display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4);">
                 <h2 id="problem-title" style="margin: 0; color: var(--text-main);">{{ $problem->title }}</h2>
                 <span class="badge badge-neutral">{{ $problem->time_limit }} sec / {{ $problem->memory_limit }} MB</span>
@@ -106,6 +116,9 @@
                     <pre style="white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-3); background: var(--bg-body); border-radius: var(--radius-md);">{{ $sample->expected_output }}</pre>
                 </div>
             @endforeach
+            @if($hasPdf)
+                </div>
+            @endif
         </section>
 
         <section class="card" aria-labelledby="submission-title">
@@ -131,6 +144,27 @@
         </section>
     </div>
 </div>
+@if($hasPdf)
+<script>
+    (() => {
+        const pdfView = document.querySelector('[data-problem-pdf]');
+        const htmlView = document.querySelector('[data-problem-html]');
+        document.querySelectorAll('[data-problem-view]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const showPdf = button.dataset.problemView === 'pdf';
+                pdfView.hidden = !showPdf;
+                htmlView.hidden = showPdf;
+                document.querySelectorAll('[data-problem-view]').forEach((toggle) => {
+                    const active = toggle === button;
+                    toggle.setAttribute('aria-pressed', String(active));
+                    toggle.classList.toggle('btn-primary', active);
+                    toggle.classList.toggle('btn-secondary', !active);
+                });
+            });
+        });
+    })();
+</script>
+@endif
 @if($hasSchedule)
 <script>
     (() => {

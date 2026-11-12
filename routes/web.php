@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\JudgeProblemMediaController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\LocalJudgeController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UvaPdfContestImportController;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,12 +51,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
 Route::prefix('judge')->name('judge.')->group(function () {
     Route::get('/', [LocalJudgeController::class, 'index'])->name('index');
     Route::get('/problem/{id}', [LocalJudgeController::class, 'show'])->whereNumber('id')->name('show');
+    Route::get('/problem/{problemId}/pdf', [JudgeProblemMediaController::class, 'showPdf'])
+        ->whereNumber('problemId')
+        ->name('problem.pdf');
     Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
 
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/problems/create', [LocalJudgeController::class, 'createProblem'])->name('admin.problems.create');
         Route::post('/problems/store', [LocalJudgeController::class, 'storeProblem'])->name('admin.problems.store');
         Route::post('/problems/import', [LocalJudgeController::class, 'importProblem'])->middleware('throttle:5,1')->name('admin.problems.import');
+        Route::post('/problems/import-pdf-url', [UvaPdfContestImportController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('admin.problems.importPdfUrl');
         Route::get('/problems/{id}/edit', [LocalJudgeController::class, 'editProblem'])
             ->whereNumber('id')
             ->name('problems.edit');
@@ -64,6 +72,15 @@ Route::prefix('judge')->name('judge.')->group(function () {
         Route::delete('/problems/{id}', [LocalJudgeController::class, 'destroyProblem'])
             ->whereNumber('id')
             ->name('admin.problems.destroy');
+        Route::post('/problems/media/images', [JudgeProblemMediaController::class, 'uploadImages'])
+            ->name('admin.problems.media.images');
+        Route::post('/problems/media/pdf', [JudgeProblemMediaController::class, 'uploadPdf'])
+            ->name('admin.problems.media.pdf.upload');
+        Route::post('/problems/media/pdf/generate', [JudgeProblemMediaController::class, 'generatePdf'])
+            ->name('admin.problems.media.pdf.generate');
+        Route::delete('/problems/{problemId}/media/pdf', [JudgeProblemMediaController::class, 'removePdf'])
+            ->whereNumber('problemId')
+            ->name('admin.problems.media.pdf.remove');
         Route::get('/submissions', [LocalJudgeController::class, 'allSubmissions'])->name('admin.submissions');
         Route::get('/submissions/{submission}', [LocalJudgeController::class, 'showSubmission'])
             ->whereNumber('submission')

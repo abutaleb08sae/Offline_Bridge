@@ -37,6 +37,7 @@ return [
 
     'gemini' => [
         'api_key' => is_string(env('GEMINI_API_KEY')) ? trim(env('GEMINI_API_KEY')) : null,
+        'model' => env('GEMINI_MODEL'),
     ],
 
 ];
