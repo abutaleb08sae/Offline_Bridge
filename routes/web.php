@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\NavigationController;
-use App\Http\Controllers\LabTaskController;
-use App\Http\Controllers\SubmissionController;
-use App\Http\Controllers\LocalJudgeController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\LabTaskController;
+use App\Http\Controllers\LocalJudgeController;
+use App\Http\Controllers\NavigationController;
+use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\UserController;
+use App\Models\ActivityLog;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,12 +100,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
 | Live Activity Logs API Route (Offline LAN Polling - Zero WebSockets)
 |--------------------------------------------------------------------------
 */
-Route::get('/api/activities/stream', function (\Illuminate\Http\Request $request) {
+Route::get('/api/activities/stream', function (Request $request) {
     $limit = min((int) $request->query('limit', 15), 50);
-    $logs = \App\Models\ActivityLog::recent($limit)->get();
+    $logs = ActivityLog::recent($limit)->get();
 
     return response()->json([
-        'latest_id' => \App\Models\ActivityLog::max('id') ?? 0,
+        'latest_id' => ActivityLog::max('id') ?? 0,
         'count' => $logs->count(),
         'activities' => $logs->map(function ($log) {
             return [

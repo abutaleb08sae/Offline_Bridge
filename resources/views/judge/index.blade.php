@@ -35,7 +35,19 @@
                     <tbody>
                         @foreach($problems as $problem)
                             <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td style="padding: var(--space-3); font-weight: 600;">{{ $problem->title }}</td>
+                                <td style="padding: var(--space-3); font-weight: 600;">
+                                    {{ $problem->title }}
+                                    @if($problem->start_time || $problem->end_time)
+                                        <span class="badge {{ $problem->isUpcoming() ? 'badge-neutral' : ($problem->isEnded() ? 'badge-warning' : 'badge-success') }}"
+                                              data-problem-schedule
+                                              data-start="{{ $problem->start_time?->timestamp ? $problem->start_time->timestamp * 1000 : '' }}"
+                                              data-end="{{ $problem->end_time?->timestamp ? $problem->end_time->timestamp * 1000 : '' }}"
+                                              data-server-now="{{ now()->timestamp * 1000 }}">
+                                            <span data-problem-status>{{ $problem->status() }}</span>
+                                            <span data-problem-remaining {{ $problem->end_time && ! $problem->isEnded() && ! $problem->isUpcoming() ? '' : 'hidden' }}></span>
+                                        </span>
+                                    @endif
+                                </td>
                                 <td style="padding: var(--space-3);">{{ $problem->time_limit }} sec</td>
                                 <td style="padding: var(--space-3);">{{ $problem->memory_limit }} MB</td>
                                 <td style="padding: var(--space-3);">{{ $problem->test_cases_count }}</td>
@@ -53,4 +65,48 @@
         @endif
     </div>
 </div>
+<script>
+    (() => {
+        const schedules = [...document.querySelectorAll('[data-problem-schedule]')];
+        if (!schedules.length) return;
+        const clientStart = performance.now();
+        const serverStart = Number(schedules[0].dataset.serverNow);
+        const format = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainder = seconds % 60;
+            return [hours, minutes, remainder].map((part) => String(part).padStart(2, '0')).join(':');
+        };
+        const update = () => {
+            const now = serverStart + (performance.now() - clientStart);
+            schedules.forEach((schedule) => {
+                const start = schedule.dataset.start ? Number(schedule.dataset.start) : null;
+                const end = schedule.dataset.end ? Number(schedule.dataset.end) : null;
+                const status = schedule.querySelector('[data-problem-status]');
+                const remaining = schedule.querySelector('[data-problem-remaining]');
+
+                if (start !== null && now < start) {
+                    status.textContent = 'Upcoming';
+                    schedule.className = 'badge badge-neutral';
+                    remaining.hidden = true;
+                } else if (end !== null && now >= end) {
+                    status.textContent = 'Ended';
+                    schedule.className = 'badge badge-warning';
+                    remaining.hidden = true;
+                } else {
+                    status.textContent = 'Live';
+                    schedule.className = 'badge badge-success';
+                    if (end !== null) {
+                        remaining.hidden = false;
+                        remaining.textContent = ` · ${format(Math.max(0, Math.floor((end - now) / 1000)))}`;
+                    } else {
+                        remaining.hidden = true;
+                    }
+                }
+            });
+        };
+        update();
+        window.setInterval(update, 1000);
+    })();
+</script>
 @endsection

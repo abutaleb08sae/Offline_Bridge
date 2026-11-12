@@ -41,6 +41,18 @@
                 </div>
             </div>
 
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3);">
+                <div>
+                    <label class="form-label" for="start_time">Contest Start Time (optional)</label>
+                    <input class="form-input" id="start_time" name="start_time" type="datetime-local" value="{{ old('start_time') }}">
+                </div>
+                <div>
+                    <label class="form-label" for="end_time">Contest End Time (optional)</label>
+                    <input class="form-input" id="end_time" name="end_time" type="datetime-local" value="{{ old('end_time') }}">
+                </div>
+            </div>
+            <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Times use the server timezone ({{ config('app.timezone') }}). Leave both blank for unlimited practice.</p>
+
             <label class="form-label" for="description">Problem description</label>
             <textarea class="form-textarea" id="description" name="description" rows="8" required>{{ old('description') }}</textarea>
         </section>

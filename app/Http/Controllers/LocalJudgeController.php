@@ -8,8 +8,10 @@ use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class LocalJudgeController extends Controller
@@ -43,16 +45,18 @@ class LocalJudgeController extends Controller
 
     public function storeProblem(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validateSchedule($request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:20000'],
             'time_limit' => ['required', 'integer', 'min:1', 'max:10'],
             'memory_limit' => ['required', 'integer', 'min:64', 'max:512'],
+            'start_time' => ['nullable', 'date'],
+            'end_time' => ['nullable', 'date'],
             'test_cases' => ['required', 'array', 'min:1', 'max:100'],
             'test_cases.*' => ['required', 'array:input,expected_output'],
             'test_cases.*.input' => ['present', 'nullable', 'string', 'max:65535'],
             'test_cases.*.expected_output' => ['present', 'nullable', 'string', 'max:65535'],
-        ]);
+        ]));
 
         $problem = DB::transaction(function () use ($validated) {
             $problem = JudgeProblem::create([
@@ -60,6 +64,8 @@ class LocalJudgeController extends Controller
                 'description' => $validated['description'],
                 'time_limit' => $validated['time_limit'],
                 'memory_limit' => $validated['memory_limit'],
+                'start_time' => $validated['start_time'] ?? null,
+                'end_time' => $validated['end_time'] ?? null,
             ]);
 
             $problem->testCases()->createMany(array_map(static fn (array $testCase): array => [
@@ -89,17 +95,19 @@ class LocalJudgeController extends Controller
 
     public function updateProblem(Request $request, int $id): RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validateSchedule($request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:20000'],
             'time_limit' => ['required', 'integer', 'min:1', 'max:10'],
             'memory_limit' => ['required', 'integer', 'min:64', 'max:512'],
+            'start_time' => ['nullable', 'date'],
+            'end_time' => ['nullable', 'date'],
             'test_cases' => ['required', 'array', 'min:1', 'max:100'],
             'test_cases.*' => ['required', 'array:id,input,expected_output'],
             'test_cases.*.id' => ['nullable', 'integer', 'distinct', 'exists:judge_test_cases,id'],
             'test_cases.*.input' => ['present', 'nullable', 'string', 'max:65535'],
             'test_cases.*.expected_output' => ['present', 'nullable', 'string', 'max:65535'],
-        ]);
+        ]));
 
         $problem = JudgeProblem::findOrFail($id);
 
@@ -119,6 +127,8 @@ class LocalJudgeController extends Controller
                 'description' => $validated['description'],
                 'time_limit' => $validated['time_limit'],
                 'memory_limit' => $validated['memory_limit'],
+                'start_time' => $validated['start_time'] ?? null,
+                'end_time' => $validated['end_time'] ?? null,
             ]);
 
             foreach ($testCases as $testCase) {
@@ -172,11 +182,23 @@ class LocalJudgeController extends Controller
 
         if (strlen($validated['code']) > (int) config('judge.max_code_bytes', 65536)) {
             return back()->withInput()->withErrors([
-                'code' => 'Code must not exceed ' . number_format((int) config('judge.max_code_bytes', 65536)) . ' bytes.',
+                'code' => 'Code must not exceed '.number_format((int) config('judge.max_code_bytes', 65536)).' bytes.',
             ]);
         }
 
         $problem = JudgeProblem::with('testCases')->findOrFail($validated['judge_problem_id']);
+        if ($problem->isUpcoming()) {
+            return back()->withInput()->withErrors([
+                'schedule' => 'This problem is not accepting submissions yet.',
+            ]);
+        }
+
+        if ($problem->isEnded()) {
+            return back()->withInput()->withErrors([
+                'schedule' => 'The submission window for this problem has ended.',
+            ]);
+        }
+
         $code = $validated['code'];
 
         if (preg_match('/(?:\bsystem\s*\(|\bexec\s*\(|\bshell_exec\s*\(|\bWinExec\b|\bshutdown\b)/i', $code) === 1) {
@@ -186,6 +208,13 @@ class LocalJudgeController extends Controller
             $result = $runner->judge($validated['language'], $problem, $problem->testCases, $code);
             $verdict = $result['verdict'];
             $details = $result['details'];
+        }
+
+        $problem->refresh();
+        if ($problem->isUpcoming() || $problem->isEnded()) {
+            return back()->withInput()->withErrors([
+                'schedule' => 'The submission window closed before your submission could be recorded.',
+            ]);
         }
 
         $submission = JudgeSubmission::create([
@@ -209,5 +238,17 @@ class LocalJudgeController extends Controller
             'verdict' => $verdict,
             'details' => $details,
         ]);
+    }
+
+    private function validateSchedule(array $validated): array
+    {
+        if (! empty($validated['start_time']) && ! empty($validated['end_time'])
+            && Carbon::parse($validated['end_time'])->lte(Carbon::parse($validated['start_time']))) {
+            throw ValidationException::withMessages([
+                'end_time' => 'The contest end time must be after the start time.',
+            ]);
+        }
+
+        return $validated;
     }
 }
