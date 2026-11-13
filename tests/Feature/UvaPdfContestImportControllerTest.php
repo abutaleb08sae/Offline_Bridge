@@ -89,7 +89,61 @@ class UvaPdfContestImportControllerTest extends TestCase
         $this->get(route('judge.show', $problem->id))
             ->assertOk()
             ->assertSee(asset('storage/'.$problem->pdf_path), false)
+            ->assertDontSee('UVa PDF View')
+            ->assertDontSee('HTML View')
+            ->assertDontSee('data-problem-html')
             ->assertSee('Submit Code');
+    }
+
+    public function test_pdf_samples_are_saved_exactly_and_gemini_prose_cases_are_rejected(): void
+    {
+        config(['services.gemini.api_key' => 'AQ.test-key']);
+        Storage::fake('public');
+        $sampleInput = "4\n0 -2 -7 0\n9 2 -6 2\n-4 1 -4 1\n-1 8 0 -2";
+        $pdfContents = Pdf::loadHTML(
+            '<html><body><h1>108 - Maximum Sum</h1><p>Find the maximum sum of a sub-rectangle in a matrix.</p><h2>Sample Input</h2><pre>'
+            .e($sampleInput)
+            .'</pre><h2>Sample Output</h2><pre>15</pre></body></html>'
+        )->output();
+        $validCases = array_fill(0, 6, [
+            'input' => "1\n5",
+            'expected_output' => '5',
+        ]);
+        $generatedCases = array_merge($validCases, [[
+            'input' => "1\n0",
+            'expected_output' => 'The output is the sum of the maximal sub-rectangle.',
+        ]]);
+        Http::fake([
+            'https://onlinejudge.org/external/1/108.pdf' => Http::response($pdfContents, 200, ['Content-Type' => 'application/pdf']),
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [[
+                        'text' => json_encode([
+                            'title' => '108 - Maximum Sum',
+                            'test_cases' => $generatedCases,
+                        ], JSON_THROW_ON_ERROR),
+                    ]]],
+                ]],
+            ], 200),
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('judge.admin.problems.importPdfUrl'), [
+                'pdf_url' => 'https://onlinejudge.org/external/1/108.pdf',
+            ])
+            ->assertRedirect(route('judge.problems.edit', 1));
+
+        $problem = JudgeProblem::with('testCases')->firstOrFail();
+        $this->assertSame($sampleInput, $problem->testCases[0]->input);
+        $this->assertSame('15', $problem->testCases[0]->expected_output);
+        $this->assertCount(7, $problem->testCases);
+        $this->assertFalse($problem->testCases->contains(
+            fn ($case): bool => str_contains($case->expected_output, 'The output is')
+        ));
+        Http::assertSent(fn (Request $request): bool =>
+            ($request['contents'][0]['parts'][1]['inlineData']['data'] ?? null) === base64_encode($pdfContents)
+            && str_contains($request['contents'][0]['parts'][0]['text'], 'EXACT Sample Input and Sample Output')
+        );
     }
 
     public function test_uva_html_without_downloadable_pdf_generates_local_pdf_and_rejects_bad_schedule(): void
@@ -380,7 +434,7 @@ class UvaPdfContestImportControllerTest extends TestCase
         Log::shouldHaveReceived('warning')->withArgs(fn (string $message): bool => str_contains($message, 'without Gemini judge cases'))->once();
     }
 
-    public function test_all_temporary_model_failures_without_samples_import_placeholder_case(): void
+    public function test_all_temporary_model_failures_without_samples_import_without_placeholder_case(): void
     {
         config([
             'services.gemini.api_key' => 'AQ.test-key',
@@ -409,8 +463,6 @@ class UvaPdfContestImportControllerTest extends TestCase
 
         $problem = JudgeProblem::with('testCases')->firstOrFail();
         $this->assertSame('100 - The 3n + 1 problem', $problem->title);
-        $this->assertCount(1, $problem->testCases);
-        $this->assertSame('', $problem->testCases[0]->input);
-        $this->assertSame('', $problem->testCases[0]->expected_output);
+        $this->assertCount(0, $problem->testCases);
     }
 }

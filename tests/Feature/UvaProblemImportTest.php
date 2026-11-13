@@ -72,7 +72,9 @@ class UvaProblemImportTest extends TestCase
         $this->assertSame($pdfContents, Storage::disk('public')->get($problem->pdf_path));
         $this->get(route('judge.show', $problem->id))
             ->assertOk()
-            ->assertSee('UVa PDF View')
+            ->assertDontSee('UVa PDF View')
+            ->assertDontSee('HTML View')
+            ->assertDontSee('data-problem-html')
             ->assertSee(asset('storage/'.$problem->pdf_path), false);
 
         Http::assertSent(fn (Request $request): bool => $request->url() === 'https://onlinejudge.org/external/1/100.pdf');
