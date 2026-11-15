@@ -129,7 +129,7 @@ graph TB
 ## ⚡ Installation & Quick Start
 
 ### Prerequisites
-- **PHP** >= 8.2 (with `pdo_mysql`, `mbstring`, `openssl`, `curl` extensions enabled)
+- **PHP** >= 8.2 (with `pdo_mysql`, `mbstring`, `openssl`, `curl`, and `gd` extensions enabled; GD must include WebP support for WebP uploads)
 - **MySQL** 8.0+ or MariaDB, running locally or on your LAN
 - **Composer** (v2.x)
 - **Git**

@@ -71,6 +71,31 @@
     </details>
     </div>
 
+    <details class="card" id="localFileImport" open>
+        <summary style="cursor: pointer; font-weight: 600;">Auto-Generate a PDF Contest Problem from Local File (Upload PDF / Image from PC)</summary>
+        <p style="color: var(--text-muted);">Upload a problem statement from your computer, then review the generated judge test cases before sharing.</p>
+        <form method="POST" action="{{ route('judge.admin.problems.importLocalFile') }}" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: var(--space-3);">
+            @csrf
+            <div>
+                <label class="form-label" for="local_problem_file">Problem File (PDF or Question Photo)</label>
+                <input class="form-input" id="local_problem_file" name="problem_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" required>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3);">
+                <div>
+                    <label class="form-label" for="local_contest_start_time">Contest Start Time (optional)</label>
+                    <input class="form-input" id="local_contest_start_time" name="contest_start_time" type="datetime-local" value="{{ old('contest_start_time') }}">
+                </div>
+                <div>
+                    <label class="form-label" for="local_contest_end_time">Contest End Time (optional)</label>
+                    <input class="form-input" id="local_contest_end_time" name="contest_end_time" type="datetime-local" value="{{ old('contest_end_time') }}">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" type="submit">Upload &amp; Generate PDF Problem</button>
+            </div>
+        </form>
+    </details>
+
     @if(session('success'))
         <div class="card" role="status" style="border-color: var(--color-success-text); color: var(--color-success-text);">{{ session('success') }}</div>
     @endif

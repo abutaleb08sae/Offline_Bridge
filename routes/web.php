@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\JudgeProblemMediaController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\LocalJudgeController;
+use App\Http\Controllers\LocalFileProblemImportController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
@@ -63,6 +64,9 @@ Route::prefix('judge')->name('judge.')->group(function () {
         Route::post('/problems/import-pdf-url', [UvaPdfContestImportController::class, 'store'])
             ->middleware('throttle:5,1')
             ->name('admin.problems.importPdfUrl');
+        Route::post('/problems/import-local-file', [LocalFileProblemImportController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('admin.problems.importLocalFile');
         Route::get('/problems/{id}/edit', [LocalJudgeController::class, 'editProblem'])
             ->whereNumber('id')
             ->name('problems.edit');
