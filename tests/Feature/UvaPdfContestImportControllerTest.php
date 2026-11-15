@@ -8,7 +8,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -38,12 +37,12 @@ class UvaPdfContestImportControllerTest extends TestCase
             '<html><body><h1>100 - The 3n + 1 problem</h1><p>Given two integers i and j, determine the maximum cycle length for every integer between i and j.</p></body></html>'
         )->output();
         $hiddenCases = [
-            ['input' => "100 200\n", 'expected_output' => "100 200 125\n"],
-            ['input' => "201 210\n", 'expected_output' => "201 210 89\n"],
-            ['input' => "900 1000\n", 'expected_output' => "900 1000 174\n"],
-            ['input' => "1 1\n", 'expected_output' => "1 1 1\n"],
-            ['input' => "10 1\n", 'expected_output' => "10 1 20\n"],
-            ['input' => "100 101\n", 'expected_output' => "100 101 119\n"],
+            ['input' => "100 200\n", 'expected_output' => "100 200 125\n", 'is_sample' => false],
+            ['input' => "201 210\n", 'expected_output' => "201 210 89\n", 'is_sample' => false],
+            ['input' => "900 1000\n", 'expected_output' => "900 1000 174\n", 'is_sample' => false],
+            ['input' => "1 1\n", 'expected_output' => "1 1 1\n", 'is_sample' => false],
+            ['input' => "10 1\n", 'expected_output' => "10 1 20\n", 'is_sample' => false],
+            ['input' => "100 101\n", 'expected_output' => "100 101 119\n", 'is_sample' => false],
         ];
         Http::fake([
             'https://onlinejudge.org/index.php*' => Http::response(
@@ -105,13 +104,11 @@ class UvaPdfContestImportControllerTest extends TestCase
             .e($sampleInput)
             .'</pre><h2>Sample Output</h2><pre>15</pre></body></html>'
         )->output();
-        $validCases = array_fill(0, 6, [
-            'input' => "1\n5",
-            'expected_output' => '5',
-        ]);
+        $validCases = $this->hiddenCases();
         $generatedCases = array_merge($validCases, [[
             'input' => "1\n0",
             'expected_output' => 'The output is the sum of the maximal sub-rectangle.',
+            'is_sample' => false,
         ]]);
         Http::fake([
             'https://onlinejudge.org/external/1/108.pdf' => Http::response($pdfContents, 200, ['Content-Type' => 'application/pdf']),
@@ -143,6 +140,74 @@ class UvaPdfContestImportControllerTest extends TestCase
         Http::assertSent(fn (Request $request): bool =>
             ($request['contents'][0]['parts'][1]['inlineData']['data'] ?? null) === base64_encode($pdfContents)
             && str_contains($request['contents'][0]['parts'][0]['text'], 'EXACT Sample Input and Sample Output')
+            && ($request['generationConfig']['responseSchema']['properties']['test_cases']['minItems'] ?? null) === 6
+            && isset($request['generationConfig']['responseSchema']['properties']['test_cases']['items']['properties']['is_sample'])
+        );
+    }
+
+    public function test_top_up_retries_invalid_and_duplicate_cases_until_six_valid_cases_are_available(): void
+    {
+        config(['services.gemini.api_key' => 'AQ.test-key']);
+        Storage::fake('public');
+        $pdfContents = Pdf::loadHTML(
+            '<html><body><h1>100 - The 3n + 1 problem</h1><p>Calculate the maximum cycle length for the given range.</p></body></html>'
+        )->output();
+        $initialCases = [
+            ['input' => '1', 'expected_output' => '2', 'is_sample' => false],
+            ['input' => '2', 'expected_output' => '4', 'is_sample' => false],
+            ['input' => '3', 'expected_output' => '6', 'is_sample' => false],
+            ['input' => '4', 'expected_output' => '8', 'is_sample' => false],
+            ['input' => '5', 'expected_output' => '', 'is_sample' => false],
+            ['input' => '6', 'expected_output' => 'The output is the result.', 'is_sample' => false],
+        ];
+        $topUpCases = [
+            ['input' => '1', 'expected_output' => '2', 'is_sample' => false],
+            ['input' => '2', 'expected_output' => '4', 'is_sample' => false],
+            ['input' => '3', 'expected_output' => '6', 'is_sample' => false],
+            ['input' => '4', 'expected_output' => '8', 'is_sample' => false],
+            ['input' => '5', 'expected_output' => '10', 'is_sample' => false],
+            ['input' => '6', 'expected_output' => '12', 'is_sample' => false],
+        ];
+        Http::fake(function (Request $request) use ($pdfContents, $initialCases, $topUpCases) {
+            if ($request->url() === 'https://onlinejudge.org/external/1/100.pdf') {
+                return Http::response($pdfContents, 200, ['Content-Type' => 'application/pdf']);
+            }
+            if (str_contains($request->url(), 'generativelanguage.googleapis.com')) {
+                $prompt = $request['contents'][0]['parts'][0]['text'] ?? '';
+                $cases = str_contains($prompt, '"top_up_attempt"') ? $topUpCases : $initialCases;
+
+                return Http::response([
+                    'candidates' => [[
+                        'content' => ['parts' => [[
+                            'text' => json_encode([
+                                'title' => 'The 3n + 1 problem',
+                                'test_cases' => $cases,
+                            ], JSON_THROW_ON_ERROR),
+                        ]]],
+                    ]],
+                ]);
+            }
+
+            return Http::response('unexpected request', 404);
+        });
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('judge.admin.problems.importPdfUrl'), [
+                'pdf_url' => 'https://onlinejudge.org/external/1/100.pdf',
+            ])
+            ->assertRedirect(route('judge.problems.edit', 1));
+
+        $problem = JudgeProblem::with('testCases')->firstOrFail();
+        $this->assertCount(6, $problem->testCases);
+        $this->assertSame(6, $problem->testCases->pluck('input')->unique()->count());
+        $this->assertFalse($problem->testCases->contains(
+            fn ($case): bool => trim($case->expected_output) === ''
+                || str_contains($case->expected_output, 'The output is')
+        ));
+        Http::assertSent(fn (Request $request): bool =>
+            str_contains($request->url(), 'generativelanguage.googleapis.com')
+            && str_contains($request['contents'][0]['parts'][0]['text'], '"top_up_attempt":1')
+            && ($request['generationConfig']['responseSchema']['properties']['test_cases']['minItems'] ?? null) === 6
         );
     }
 
@@ -164,10 +229,7 @@ class UvaPdfContestImportControllerTest extends TestCase
                             'title' => 'The 3n + 1 problem',
                             'time_limit' => 2,
                             'memory_limit' => 64,
-                            'test_cases' => array_fill(0, 6, [
-                                'input' => "1 10\n",
-                                'expected_output' => "1 10 20\n",
-                            ]),
+                            'test_cases' => $this->hiddenCases(),
                         ], JSON_THROW_ON_ERROR),
                     ]]],
                 ]],
@@ -199,11 +261,7 @@ class UvaPdfContestImportControllerTest extends TestCase
 
     public function test_missing_gemini_limits_and_title_use_uvaproblem_defaults(): void
     {
-        $validCases = array_fill(0, 6, [
-            'input' => "1 2\n",
-            'expected_output' => "3\n",
-        ]);
-        $problem = $this->importPdfProblem(['test_cases' => $validCases]);
+        $problem = $this->importPdfProblem(['test_cases' => $this->hiddenCases()]);
 
         $this->assertSame('UVa Problem #100', $problem->title);
         $this->assertSame(3, $problem->time_limit);
@@ -212,15 +270,11 @@ class UvaPdfContestImportControllerTest extends TestCase
 
     public function test_out_of_range_gemini_limits_and_empty_title_use_defaults(): void
     {
-        $validCases = array_fill(0, 6, [
-            'input' => "1 2\n",
-            'expected_output' => "3\n",
-        ]);
         $problem = $this->importPdfProblem([
             'title' => '',
             'time_limit' => '61 seconds',
             'memory_limit' => '2049 MB',
-            'test_cases' => $validCases,
+            'test_cases' => $this->hiddenCases(),
         ]);
 
         $this->assertSame('UVa Problem #100', $problem->title);
@@ -255,6 +309,15 @@ class UvaPdfContestImportControllerTest extends TestCase
         return JudgeProblem::firstOrFail();
     }
 
+    private function hiddenCases(): array
+    {
+        return array_map(static fn (int $number): array => [
+            'input' => (string) $number,
+            'expected_output' => (string) ($number * 2),
+            'is_sample' => false,
+        ], range(1, 6));
+    }
+
     public function test_gemini_model_404s_trigger_ipv4_safe_model_discovery_and_retry(): void
     {
         config([
@@ -269,10 +332,7 @@ class UvaPdfContestImportControllerTest extends TestCase
             'title' => 'The 3n + 1 problem',
             'time_limit' => 2,
             'memory_limit' => 64,
-            'test_cases' => array_fill(0, 6, [
-                'input' => "1 10\n",
-                'expected_output' => "1 10 20\n",
-            ]),
+            'test_cases' => $this->hiddenCases(),
         ];
         Http::fake(function (Request $request) use ($pdfContents, $generated) {
             if ($request->url() === 'https://onlinejudge.org/external/1/100.pdf') {
@@ -347,10 +407,7 @@ class UvaPdfContestImportControllerTest extends TestCase
             'title' => 'The 3n + 1 problem',
             'time_limit' => 3,
             'memory_limit' => 256,
-            'test_cases' => array_fill(0, 6, [
-                'input' => "1 10\n",
-                'expected_output' => "1 10 20\n",
-            ]),
+            'test_cases' => $this->hiddenCases(),
         ];
         Http::fake(function (Request $request) use ($pdfContents, $generated) {
             if ($request->url() === 'https://onlinejudge.org/external/1/100.pdf') {
@@ -389,14 +446,13 @@ class UvaPdfContestImportControllerTest extends TestCase
         $this->assertDatabaseCount('judge_problems', 1);
     }
 
-    public function test_all_temporary_model_failures_import_with_parsed_samples_and_log_warning(): void
+    public function test_all_temporary_model_failures_do_not_import_with_fewer_than_six_cases(): void
     {
         config([
             'services.gemini.api_key' => 'AQ.test-key',
             'services.gemini.model' => 'gemini-configured-busy',
         ]);
         Storage::fake('public');
-        Log::spy();
         $pdfContents = Pdf::loadHTML(
             '<html><body><h1>100 - The 3n + 1 problem</h1><p>Given two integers i and j, determine the maximum cycle length for every integer between i and j.</p></body></html>'
         )->output();
@@ -419,22 +475,16 @@ class UvaPdfContestImportControllerTest extends TestCase
         });
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->from(route('judge.admin.problems.create'))
             ->post(route('judge.admin.problems.importPdfUrl'), [
                 'pdf_url' => 'https://onlinejudge.org/index.php?problem=100',
             ])
-            ->assertRedirect(route('judge.problems.edit', 1));
-
-        $problem = JudgeProblem::with('testCases')->firstOrFail();
-        $this->assertSame('100 - The 3n + 1 problem', $problem->title);
-        $this->assertSame(3, $problem->time_limit);
-        $this->assertSame(256, $problem->memory_limit);
-        $this->assertCount(1, $problem->testCases);
-        $this->assertSame('1 10', $problem->testCases[0]->input);
-        $this->assertSame('1 10 20', $problem->testCases[0]->expected_output);
-        Log::shouldHaveReceived('warning')->withArgs(fn (string $message): bool => str_contains($message, 'without Gemini judge cases'))->once();
+            ->assertRedirect(route('judge.admin.problems.create'))
+            ->assertSessionHasErrors('url');
+        $this->assertDatabaseCount('judge_problems', 0);
     }
 
-    public function test_all_temporary_model_failures_without_samples_import_without_placeholder_case(): void
+    public function test_all_temporary_model_failures_without_samples_do_not_import_a_problem(): void
     {
         config([
             'services.gemini.api_key' => 'AQ.test-key',
@@ -456,13 +506,12 @@ class UvaPdfContestImportControllerTest extends TestCase
         });
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->from(route('judge.admin.problems.create'))
             ->post(route('judge.admin.problems.importPdfUrl'), [
                 'pdf_url' => 'https://onlinejudge.org/external/1/100.pdf',
             ])
-            ->assertRedirect(route('judge.problems.edit', 1));
-
-        $problem = JudgeProblem::with('testCases')->firstOrFail();
-        $this->assertSame('100 - The 3n + 1 problem', $problem->title);
-        $this->assertCount(0, $problem->testCases);
+            ->assertRedirect(route('judge.admin.problems.create'))
+            ->assertSessionHasErrors('url');
+        $this->assertDatabaseCount('judge_problems', 0);
     }
 }
