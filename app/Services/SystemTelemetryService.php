@@ -430,30 +430,42 @@ class SystemTelemetryService
 
     /**
      * Get dynamic SVG chart coordinates & time series for client connections over 12 hours.
+     * Synced 100% with live Connected Clients and actual database activity.
      */
     public static function getChartData(): array
     {
         $intervals = [];
-        $now = now();
+        
+        // Match browser local time (UTC+6 Asia/Dhaka)
+        $tz = env('APP_TIMEZONE', config('app.timezone', 'Asia/Dhaka'));
+        if ($tz === 'UTC') {
+            $tz = 'Asia/Dhaka';
+        }
+        $now = now()->setTimezone($tz);
+
+        // Get live connected clients count directly from stats (matches Picture 1)
+        $stats = self::getStats();
+        $currentLiveCount = (int) ($stats['connected_clients']['current'] ?? 1);
 
         // 7 intervals spaced 2 hours apart
         for ($i = 6; $i >= 0; $i--) {
             $targetTime = (clone $now)->subHours($i * 2);
-            $startTime = (clone $targetTime)->subHours(1);
-            $endTime = (clone $targetTime)->addHours(1);
+            $startTime = (clone $targetTime)->subHours(1)->setTimezone('UTC');
+            $endTime = (clone $targetTime)->addHours(1)->setTimezone('UTC');
 
             $label = $targetTime->format('H:i');
             
             $count = 0;
             try {
                 $count = ActivityLog::whereBetween('created_at', [$startTime, $endTime])
+                    ->whereNotNull('client_ip')
                     ->distinct('client_ip')
                     ->count('client_ip');
             } catch (\Throwable $e) {}
 
-            // Base client level ensures realistic curve
+            // Current interval ($i === 0) strictly matches live Connected Clients count from Picture 1
             if ($i === 0) {
-                $count = max($count, 1);
+                $count = max($count, $currentLiveCount);
             }
 
             $intervals[] = [
@@ -464,10 +476,18 @@ class SystemTelemetryService
         }
 
         $values = array_column($intervals, 'value');
-        $maxValue = max(max($values), 5);
-        $peakIndex = array_search(max($values), $values);
+        $actualPeak = max($values);
+        $maxValue = max($actualPeak, 5); // Y-axis top grid line
+        
+        // Identify peak index (prefer latest index if tied)
+        $peakIndex = 0;
+        foreach ($values as $idx => $val) {
+            if ($val === $actualPeak) {
+                $peakIndex = $idx;
+            }
+        }
 
-        // Chart SVG dimensions: width: 650, height: 200, plot area: x from 50 to 590, y from 140 to 20
+        // SVG dimensions: width 650, height 200, plot area: x from 50 to 590, y from 140 to 20
         $minY = 20;
         $maxY = 140;
         $startX = 50;
@@ -479,7 +499,7 @@ class SystemTelemetryService
 
         foreach ($intervals as $idx => $item) {
             $x = round($startX + ($idx * $stepX), 1);
-            $ratio = $item['value'] / $maxValue;
+            $ratio = $maxValue > 0 ? ($item['value'] / $maxValue) : 0;
             $y = round($maxY - ($ratio * ($maxY - $minY)), 1);
 
             $pathPoints[] = "{$x},{$y}";
@@ -495,23 +515,80 @@ class SystemTelemetryService
         $areaPath = "M {$startX},{$maxY} L " . implode(' L ', $pathPoints) . " L {$endX},{$maxY} Z";
         $linePath = "M " . implode(' L ', $pathPoints);
 
-        $peakItem = $circles[$peakIndex] ?? $circles[0];
+        $peakItem = $circles[$peakIndex] ?? end($circles);
         $peakX = $peakItem['cx'];
         $peakY = $peakItem['cy'];
 
+        // Peak label correctly matches actual peak value (e.g. "1 PC" or "5 PCs")
+        $peakLabel = "{$actualPeak} " . ($actualPeak === 1 ? 'PC' : 'PCs');
+        
+        $peakRectWidth = strlen($peakLabel) > 5 ? 64 : 54;
+        $peakRectX = max(40, min(590 - $peakRectWidth, $peakX - ($peakRectWidth / 2)));
+        $peakTextX = $peakRectX + ($peakRectWidth / 2);
+        $peakRectY = max(6, $peakY - 26);
+        $peakTextY = $peakRectY + 14;
+
+        $lastCircle = end($circles);
+
         return [
-            'labels'      => array_column($intervals, 'label'),
-            'values'      => $values,
-            'areaPath'    => $areaPath,
-            'linePath'    => $linePath,
-            'circles'     => $circles,
-            'peakValue'   => $maxValue,
-            'peakLabel'   => "{$maxValue} PCs",
-            'peakRectX'   => max(40, $peakX - 30),
-            'peakRectY'   => max(5, $peakY - 26),
-            'peakTextX'   => $peakX,
-            'peakTextY'   => max(19, $peakY - 12),
+            'labels'        => array_column($intervals, 'label'),
+            'values'        => $values,
+            'areaPath'      => $areaPath,
+            'linePath'      => $linePath,
+            'circles'       => $circles,
+            'peakValue'     => $actualPeak,
+            'peakLabel'     => $peakLabel,
+            'peakRectX'     => $peakRectX,
+            'peakRectY'     => $peakRectY,
+            'peakRectWidth' => $peakRectWidth,
+            'peakTextX'     => $peakTextX,
+            'peakTextY'     => $peakTextY,
+            'currentX'      => $lastCircle['cx'],
+            'currentY'      => $lastCircle['cy'],
+            'currentValue'  => $values[count($values) - 1],
+            'yLabels'       => [
+                $maxValue,
+                round($maxValue * 0.66),
+                round($maxValue * 0.33),
+                0
+            ],
         ];
+    }
+
+    /**
+     * Package live telemetry for JSON stream / polling clients.
+     */
+    public static function getLiveTelemetryData(): array
+    {
+        return [
+            'chart'        => self::getChartData(),
+            'stats'        => self::getStats(),
+            'systemStatus' => self::getSystemStatus(),
+            'clients'      => self::getConnectedClients(),
+            'timestamp'    => now()->setTimezone(env('APP_TIMEZONE', 'Asia/Dhaka'))->format('H:i:s'),
+        ];
+    }
+
+    /**
+     * Record client workstation heartbeat.
+     */
+    public static function recordClientHeartbeat(string $ip, string $hostname, string $user, string $action): void
+    {
+        try {
+            $recent = ActivityLog::where('client_ip', $ip)
+                ->where('created_at', '>=', now()->subMinutes(10))
+                ->exists();
+
+            if (!$recent) {
+                ActivityLog::create([
+                    'client_ip'  => $ip,
+                    'action'     => $action,
+                    'details'    => "Workstation {$hostname} ({$user}) reported active",
+                    'status'     => 'info',
+                    'user_agent' => request()->userAgent() ?: 'OfflineBridge-Client/2.0',
+                ]);
+            }
+        } catch (\Throwable $e) {}
     }
 
     /**

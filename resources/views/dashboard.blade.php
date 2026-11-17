@@ -12,25 +12,26 @@
         </h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
             @foreach($systemStatus as $item)
+                @php($slug = Str::slug($item['title']))
                 <div class="card" style="padding: var(--space-4);">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
                         <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
                             {{ $item['title'] }}
                         </span>
                         @if($item['type'] === 'success')
-                            <span class="badge badge-success">{{ $item['badge'] }}</span>
+                            <span id="badge-{{ $slug }}" class="badge badge-success">{{ $item['badge'] }}</span>
                         @elseif($item['type'] === 'warning')
-                            <span class="badge badge-warning">{{ $item['badge'] }}</span>
+                            <span id="badge-{{ $slug }}" class="badge badge-warning">{{ $item['badge'] }}</span>
                         @elseif($item['type'] === 'danger')
-                            <span class="badge badge-danger">{{ $item['badge'] }}</span>
+                            <span id="badge-{{ $slug }}" class="badge badge-danger">{{ $item['badge'] }}</span>
                         @else
-                            <span class="badge badge-neutral" style="background-color: rgba(37, 99, 235, 0.15); color: #3b82f6;">{{ $item['badge'] }}</span>
+                            <span id="badge-{{ $slug }}" class="badge badge-neutral" style="background-color: rgba(37, 99, 235, 0.15); color: #3b82f6;">{{ $item['badge'] }}</span>
                         @endif
                     </div>
-                    <div style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-main); margin-bottom: 0.125rem;">
+                    <div id="val-{{ $slug }}" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-main); margin-bottom: 0.125rem;">
                         {{ $item['value'] }}
                     </div>
-                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                    <div id="desc-{{ $slug }}" style="font-size: var(--font-size-xs); color: var(--text-muted);">
                         {{ $item['desc'] }}
                     </div>
                 </div>
@@ -45,7 +46,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Connected Clients</span>
-                    <div style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <div id="statConnectedClients" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
                         {{ $stats['connected_clients']['current'] }} / {{ $stats['connected_clients']['total'] }}
                     </div>
                 </div>
@@ -56,7 +57,7 @@
                 </div>
             </div>
             <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
-                <span style="color: var(--color-success-text); font-weight: 600;">{{ $stats['connected_clients']['percentage'] }}%</span> lab capacity occupied
+                <span id="statConnectedClientsPercentage" style="color: var(--color-success-text); font-weight: 600;">{{ $stats['connected_clients']['percentage'] }}%</span> lab capacity occupied
             </div>
         </div>
 
@@ -65,7 +66,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Registered Users</span>
-                    <div style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <div id="statRegisteredUsers" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
                         {{ $stats['registered_users']['total'] }}
                     </div>
                 </div>
@@ -75,7 +76,7 @@
                     </svg>
                 </div>
             </div>
-            <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statRegisteredUsersDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
                 {{ $stats['registered_users']['description'] ?? ($stats['registered_users']['students'] . ' Students, ' . $stats['registered_users']['instructors'] . ' Instructors') }}
             </div>
         </div>
@@ -85,7 +86,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Supported Apps</span>
-                    <div style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <div id="statSupportedApps" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
                         {{ $stats['supported_apps']['total'] }} Packages
                     </div>
                 </div>
@@ -95,7 +96,7 @@
                     </svg>
                 </div>
             </div>
-            <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statSupportedAppsDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
                 {{ $stats['supported_apps']['description'] ?? 'Verified for Offline Lab' }}
             </div>
         </div>
@@ -105,7 +106,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Files Stored</span>
-                    <div style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <div id="statFilesStored" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
                         {{ $stats['files_stored']['count'] }} Files
                     </div>
                 </div>
@@ -115,7 +116,7 @@
                     </svg>
                 </div>
             </div>
-            <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statFilesStoredDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
                 {{ $stats['files_stored']['description'] ?? ('Total Storage: ' . $stats['files_stored']['size']) }}
             </div>
         </div>
@@ -123,19 +124,25 @@
 
     <!-- Section 6 & Section 7 Grid: Chart + Quick Actions -->
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-6);">
-        <!-- Section 6: Client Connections Lightweight SVG Chart -->
-        <div class="card">
-            <div class="card-header">
+        <!-- Section 6: Client Connections Lightweight SVG Chart (Picture 2) -->
+        <div class="card" style="position: relative;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <h3 class="card-title">Client Connections Over 12 Hours</h3>
                     <p class="card-subtitle">Real-time workstation activity on the local Master network</p>
                 </div>
-                <span class="badge badge-success">Live Monitoring</span>
+                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                    <span class="live-dot"></span>
+                    LIVE MONITORING
+                </span>
             </div>
 
             <!-- Custom Clean Responsive Inline SVG Chart -->
-            <div style="width: 100%; overflow-x: auto; padding-top: var(--space-2);">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 200" style="width: 100%; height: auto; display: block; overflow: visible;">
+            <div style="width: 100%; overflow-x: auto; padding-top: var(--space-2); position: relative;">
+                <!-- Tooltip floating overlay -->
+                <div id="chartTooltip" style="position: absolute; display: none; pointer-events: none; background: #0f172a; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; top: 10px; right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>
+
+                <svg id="chartSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 200" style="width: 100%; height: auto; display: block; overflow: visible;">
                     <defs>
                         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#2563eb" stop-opacity="0.35"/>
@@ -150,36 +157,44 @@
                     <line x1="40" y1="140" x2="630" y2="140" stroke="var(--border-color)" stroke-dasharray="3,3" />
 
                     <!-- Y-Axis Labels -->
-                    <text x="30" y="24" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ $chartData['peakValue'] ?? 30 }}</text>
-                    <text x="30" y="64" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ round(($chartData['peakValue'] ?? 30) * 0.66) }}</text>
-                    <text x="30" y="104" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ round(($chartData['peakValue'] ?? 30) * 0.33) }}</text>
-                    <text x="30" y="144" fill="var(--text-muted)" font-size="11" text-anchor="end">0</text>
+                    <g id="chartYAxisGroup">
+                        <text id="chartY0" x="30" y="24" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ $chartData['yLabels'][0] ?? 5 }}</text>
+                        <text id="chartY1" x="30" y="64" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ $chartData['yLabels'][1] ?? 3 }}</text>
+                        <text id="chartY2" x="30" y="104" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ $chartData['yLabels'][2] ?? 2 }}</text>
+                        <text id="chartY3" x="30" y="144" fill="var(--text-muted)" font-size="11" text-anchor="end">0</text>
+                    </g>
 
                     <!-- Area Fill Path -->
-                    <path d="{{ $chartData['areaPath'] }}" fill="url(#chartGradient)" />
+                    <path id="chartAreaPath" d="{{ $chartData['areaPath'] }}" fill="url(#chartGradient)" style="transition: d 0.4s ease;" />
 
                     <!-- Smooth Trend Line Path -->
-                    <path d="{{ $chartData['linePath'] }}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                    <path id="chartLinePath" d="{{ $chartData['linePath'] }}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition: d 0.4s ease;" />
 
                     <!-- Dynamic Interactive Data Points -->
-                    @foreach($chartData['circles'] as $c)
-                        @if($c['isPeak'])
-                            <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
-                        @else
-                            <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                        @endif
-                    @endforeach
+                    <g id="chartCirclesGroup">
+                        @foreach($chartData['circles'] as $c)
+                            @if($c['isPeak'])
+                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
+                            @else
+                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
+                            @endif
+                        @endforeach
+                    </g>
 
                     <!-- Peak Value Callout -->
-                    <rect x="{{ $chartData['peakRectX'] }}" y="{{ $chartData['peakRectY'] }}" width="60" height="20" rx="4" fill="#2563eb" />
-                    <text x="{{ $chartData['peakTextX'] }}" y="{{ $chartData['peakTextY'] }}" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">{{ $chartData['peakLabel'] }}</text>
+                    <g id="chartPeakGroup">
+                        <rect id="chartPeakRect" x="{{ $chartData['peakRectX'] }}" y="{{ $chartData['peakRectY'] }}" width="{{ $chartData['peakRectWidth'] ?? 54 }}" height="20" rx="4" fill="#2563eb" />
+                        <text id="chartPeakText" x="{{ $chartData['peakTextX'] }}" y="{{ $chartData['peakTextY'] }}" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">{{ $chartData['peakLabel'] }}</text>
+                    </g>
 
                     <!-- X-Axis Labels -->
-                    @foreach($chartData['circles'] as $c)
-                        <text x="{{ $c['cx'] }}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" {{ $c['isPeak'] ? 'font-weight=600' : '' }}>
-                            {{ $c['label'] }}{{ $c['isPeak'] ? ' (Peak)' : '' }}
-                        </text>
-                    @endforeach
+                    <g id="chartXAxisGroup">
+                        @foreach($chartData['circles'] as $c)
+                            <text x="{{ $c['cx'] }}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" {{ $c['isPeak'] ? 'font-weight=600' : '' }}>
+                                {{ $c['label'] }}{{ $c['isPeak'] ? ' (Peak)' : '' }}
+                            </text>
+                        @endforeach
+                    </g>
                 </svg>
             </div>
         </div>
@@ -422,13 +437,161 @@
 
 </div>
 
+<style>
+.live-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: liveDotPulse 1.8s infinite;
+}
+
+@keyframes liveDotPulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.chart-point {
+    cursor: pointer;
+    transition: r 0.2s ease, stroke-width 0.2s ease;
+}
+
+.chart-point:hover {
+    r: 6.5px !important;
+    stroke-width: 3px !important;
+}
+</style>
+
 <script>
-    // Live LAN Activity Polling (Pure local vanilla JS - Zero external WebSockets)
+    // Live Monitoring Telemetry Poller (Pure local LAN vanilla JS - Zero external dependencies)
     (function() {
         let lastKnownActivityId = 0;
-        const container = document.getElementById('dashboardActivityList');
+        const activityContainer = document.getElementById('dashboardActivityList');
+        const tooltip = document.getElementById('chartTooltip');
 
+        function attachChartTooltips() {
+            if (!tooltip) return;
+            document.querySelectorAll('.chart-point').forEach(circle => {
+                circle.onmouseenter = function() {
+                    const val = this.getAttribute('data-val');
+                    const lbl = this.getAttribute('data-lbl');
+                    tooltip.textContent = `${val} PC${val == 1 ? '' : 's'} active at ${lbl}`;
+                    tooltip.style.display = 'block';
+                };
+                circle.onmouseleave = function() {
+                    tooltip.style.display = 'none';
+                };
+            });
+        }
+
+        // 1. Live Telemetry Polling (Every 3 seconds)
+        function fetchLiveTelemetry() {
+            fetch("{{ route('telemetry.live') }}")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data) return;
+
+                    // Sync Chart SVG Paths & Data
+                    if (data.chart) {
+                        const areaPath = document.getElementById('chartAreaPath');
+                        const linePath = document.getElementById('chartLinePath');
+                        if (areaPath && data.chart.areaPath) areaPath.setAttribute('d', data.chart.areaPath);
+                        if (linePath && data.chart.linePath) linePath.setAttribute('d', data.chart.linePath);
+
+                        // Update Circles
+                        const circlesGroup = document.getElementById('chartCirclesGroup');
+                        if (circlesGroup && data.chart.circles) {
+                            let circlesHtml = '';
+                            data.chart.circles.forEach(c => {
+                                if (c.isPeak) {
+                                    circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
+                                } else {
+                                    circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
+                                }
+                            });
+                            circlesGroup.innerHTML = circlesHtml;
+                            attachChartTooltips();
+                        }
+
+                        // Update Peak Badge
+                        const peakRect = document.getElementById('chartPeakRect');
+                        const peakText = document.getElementById('chartPeakText');
+                        if (peakRect && peakText) {
+                            peakRect.setAttribute('x', data.chart.peakRectX);
+                            peakRect.setAttribute('y', data.chart.peakRectY);
+                            if (data.chart.peakRectWidth) peakRect.setAttribute('width', data.chart.peakRectWidth);
+                            peakText.setAttribute('x', data.chart.peakTextX);
+                            peakText.setAttribute('y', data.chart.peakTextY);
+                            peakText.textContent = data.chart.peakLabel;
+                        }
+
+                        // Update X Axis
+                        const xAxisGroup = document.getElementById('chartXAxisGroup');
+                        if (xAxisGroup && data.chart.circles) {
+                            let xHtml = '';
+                            data.chart.circles.forEach(c => {
+                                const peakAttr = c.isPeak ? 'font-weight="600"' : '';
+                                const peakSuffix = c.isPeak ? ' (Peak)' : '';
+                                xHtml += `<text x="${c.cx}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" ${peakAttr}>${c.label}${peakSuffix}</text>`;
+                            });
+                            xAxisGroup.innerHTML = xHtml;
+                        }
+
+                        // Update Y Axis
+                        if (data.chart.yLabels) {
+                            const y0 = document.getElementById('chartY0');
+                            const y1 = document.getElementById('chartY1');
+                            const y2 = document.getElementById('chartY2');
+                            if (y0) y0.textContent = data.chart.yLabels[0];
+                            if (y1) y1.textContent = data.chart.yLabels[1];
+                            if (y2) y2.textContent = data.chart.yLabels[2];
+                        }
+                    }
+
+                    // Sync Connected Clients Card with Live Data
+                    if (data.stats && data.stats.connected_clients) {
+                        const clientVal = document.getElementById('statConnectedClients');
+                        const clientPct = document.getElementById('statConnectedClientsPercentage');
+                        if (clientVal) clientVal.textContent = `${data.stats.connected_clients.current} / ${data.stats.connected_clients.total}`;
+                        if (clientPct) clientPct.textContent = `${data.stats.connected_clients.percentage}%`;
+                    }
+
+                    // Sync System Infrastructure Cards
+                    if (data.systemStatus && Array.isArray(data.systemStatus)) {
+                        data.systemStatus.forEach(item => {
+                            const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                            const v = document.getElementById('val-' + slug);
+                            const d = document.getElementById('desc-' + slug);
+                            if (v) v.textContent = item.value;
+                            if (d) d.textContent = item.desc;
+                        });
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // 2. Workstation Keep-Alive Heartbeat (Every 15s)
+        function sendClientHeartbeat() {
+            fetch("{{ route('client.heartbeat') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    hostname: 'MASTER-PC',
+                    user: 'Administrator',
+                    action: 'Master Dashboard Active'
+                })
+            }).catch(() => {});
+        }
+
+        // 3. Live Activities Polling (Every 4s)
         function fetchLiveActivities() {
+            if (!activityContainer) return;
             fetch("{{ route('activities.stream') }}?limit=8")
                 .then(res => res.json())
                 .then(data => {
@@ -464,13 +627,19 @@
                         `;
                     });
 
-                    container.innerHTML = html;
+                    activityContainer.innerHTML = html;
                 })
                 .catch(() => {});
         }
 
-        // Poll every 4 seconds
+        // Initialize and start intervals
+        attachChartTooltips();
+        fetchLiveTelemetry();
+        sendClientHeartbeat();
+
+        setInterval(fetchLiveTelemetry, 3000);
         setInterval(fetchLiveActivities, 4000);
+        setInterval(sendClientHeartbeat, 15000);
     })();
 </script>
 @endsection

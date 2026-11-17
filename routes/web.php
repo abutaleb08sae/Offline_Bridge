@@ -148,3 +148,11 @@ Route::get('/api/activities/stream', function (Request $request) {
         }),
     ]);
 })->name('activities.stream');
+
+/*
+|--------------------------------------------------------------------------
+| Live Real-Time Telemetry & Workstation Heartbeat APIs
+|--------------------------------------------------------------------------
+*/
+Route::get('/api/telemetry/live', [NavigationController::class, 'liveTelemetry'])->name('telemetry.live');
+Route::match(['get', 'post'], '/api/client/heartbeat', [NavigationController::class, 'clientHeartbeat'])->name('client.heartbeat');

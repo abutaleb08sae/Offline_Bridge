@@ -15,7 +15,10 @@ class NavigationController extends Controller
      */
     public function dashboard()
     {
-        $activities = ActivityLog::recent(10)->get();
+        $activities = collect([]);
+        try {
+            $activities = ActivityLog::recent(10)->get();
+        } catch (\Throwable $e) {}
 
         return view('dashboard', [
             'systemStatus' => SystemTelemetryService::getSystemStatus(),
@@ -209,6 +212,37 @@ class NavigationController extends Controller
 
         return view('pages.backup', [
             'backups' => $backups
+        ]);
+    }
+
+    /**
+     * Real-time live telemetry endpoint for chart, stats, and infrastructure status.
+     */
+    public function liveTelemetry(Request $request)
+    {
+        return response()->json(SystemTelemetryService::getLiveTelemetryData());
+    }
+
+    /**
+     * Client workstation heartbeat endpoint.
+     */
+    public function clientHeartbeat(Request $request)
+    {
+        $ip = $request->ip() ?: '127.0.0.1';
+        $hostname = $request->input('hostname') ?: ($ip === '127.0.0.1' ? 'MASTER-CONSOLE' : 'LAB-PC-' . substr(md5($ip), 0, 4));
+        $user = $request->input('user') ?: (auth()->check() ? auth()->user()->name : 'Active Workstation');
+        $action = $request->input('action') ?: 'Live Session';
+
+        SystemTelemetryService::recordClientHeartbeat($ip, $hostname, $user, $action);
+
+        $stats = SystemTelemetryService::getStats();
+
+        return response()->json([
+            'status'            => 'acknowledged',
+            'ip'                => $ip,
+            'hostname'          => $hostname,
+            'timestamp'         => now()->setTimezone(env('APP_TIMEZONE', 'Asia/Dhaka'))->format('H:i:s'),
+            'connected_clients' => $stats['connected_clients']['current'],
         ]);
     }
 }
