@@ -15,12 +15,12 @@
         })();
     </script>
 </head>
-<body style="min-height: 100vh; background-color: var(--bg-body); display: flex; flex-direction: column; justify-content: space-between; padding: var(--space-4);">
+<body class="standalone-page" style="display: flex; flex-direction: column; justify-content: space-between; padding: var(--space-4);">
 
     <!-- Top Minimal Navigation Bar -->
     <header style="max-width: 720px; width: 100%; margin: 0 auto var(--space-6); display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: var(--space-3);">
-            <div style="width: 38px; height: 38px; background-color: var(--primary); color: #ffffff; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;">
+            <div class="glass-icon-box blue" style="width: 44px; height: 44px; font-weight: 800; font-size: 1.15rem; border-radius: 14px;">
                 OB
             </div>
             <div>
@@ -87,7 +87,7 @@
 
         <!-- Submission Form Card -->
         <div class="card" style="padding: var(--space-6);">
-            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: var(--space-4); margin-bottom: var(--space-6);">
+            <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: var(--space-4); margin-bottom: var(--space-6);">
                 <h2 style="font-size: var(--font-size-xl); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-1);">
                     Lab Solution Submission Portal
                 </h2>
@@ -147,7 +147,7 @@
 
                         <input type="file" name="submission_file" id="submissionFileInput" accept=".pkt,.pkz,.pka,.zip,.pdf,.cpp" required style="display: none;" onchange="handleFileSelected(this)">
 
-                        <div class="upload-dropzone" id="submissionDropzone" onclick="document.getElementById('submissionFileInput').click()" style="cursor: pointer; text-align: center; border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: var(--space-6); transition: all 0.2s ease;">
+                        <div class="upload-dropzone" id="submissionDropzone" onclick="document.getElementById('submissionFileInput').click()" style="cursor: pointer; text-align: center; padding: var(--space-6);">
                             <svg xmlns="http://www.w3.org/2000/svg" class="upload-dropzone-icon" style="width: 40px; height: 40px; margin: 0 auto var(--space-2); color: var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
                             </svg>

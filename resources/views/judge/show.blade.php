@@ -18,17 +18,20 @@
     .problem-statement pre {
         margin: 0.5rem 0 1rem;
         padding: 0.75rem 1rem;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
+        background: var(--bg-surface-hover);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
         overflow-x: auto;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
     }
     .problem-statement code {
         padding: 0.1em 0.3em;
-        background: var(--bg-body);
+        background: var(--bg-surface-hover);
+        border: 1px solid var(--glass-border);
         border-radius: var(--radius-sm);
+        color: var(--text-main);
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         overflow-wrap: anywhere;
     }

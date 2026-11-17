@@ -7,7 +7,7 @@
 <div style="display: flex; flex-direction: column; gap: var(--space-6);">
 
     <!-- Notice Banner -->
-    <div class="card" style="background-color: var(--color-warning-bg); border-color: rgba(245, 158, 11, 0.3);">
+    <div class="glass-card" style="background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.4);">
         <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
             <svg xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px;color:var(--color-warning-text);flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -38,7 +38,7 @@
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-4);">
             @foreach($applications as $app)
-                <div style="background-color: var(--bg-surface-hover); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
                             <div>
@@ -68,7 +68,7 @@
                         </p>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: var(--space-3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: var(--space-3);">
                         <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
                             Active Installs: <strong style="color: var(--text-main);">{{ $app['installed_clients'] }} Workstations</strong>
                         </span>

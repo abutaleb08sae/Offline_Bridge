@@ -27,22 +27,22 @@
         @if($problems->isEmpty())
             <p style="padding: var(--space-4); color: var(--text-muted);">No judge problems are available yet.</p>
         @else
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <div class="table-container">
+                <table class="table">
                     <thead>
-                        <tr style="text-align: left; border-bottom: 1px solid var(--border-color);">
-                            <th style="padding: var(--space-3);">Problem</th>
-                            <th style="padding: var(--space-3);">Time limit</th>
-                            <th style="padding: var(--space-3);">Memory limit</th>
-                            <th style="padding: var(--space-3);">Test cases</th>
-                            <th style="padding: var(--space-3);">PDF</th>
-                            <th style="padding: var(--space-3);"><span class="sr-only">Action</span></th>
+                        <tr>
+                            <th>Problem</th>
+                            <th>Time limit</th>
+                            <th>Memory limit</th>
+                            <th>Test cases</th>
+                            <th>PDF</th>
+                            <th style="text-align: right;"><span class="sr-only">Action</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($problems as $problem)
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td style="padding: var(--space-3); font-weight: 600;">
+                            <tr>
+                                <td style="font-weight: 600;">
                                     {{ $problem->title }}
                                     @if($problem->start_time || $problem->end_time)
                                         <span class="badge {{ $problem->isUpcoming() ? 'badge-neutral' : ($problem->isEnded() ? 'badge-warning' : 'badge-success') }}"
@@ -55,37 +55,39 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td style="padding: var(--space-3);">{{ $problem->time_limit }} sec</td>
-                                <td style="padding: var(--space-3);">{{ $problem->memory_limit }} MB</td>
-                                <td style="padding: var(--space-3);">{{ $problem->test_cases_count }}</td>
-                                <td style="padding: var(--space-3);">
+                                <td>{{ $problem->time_limit }} sec</td>
+                                <td>{{ $problem->memory_limit }} MB</td>
+                                <td>{{ $problem->test_cases_count }}</td>
+                                <td>
                                     <span class="badge {{ $problem->pdf_path ? 'badge-success' : 'badge-neutral' }}">
                                         {{ $problem->pdf_path ? 'PDF Ready' : 'No PDF' }}
                                     </span>
                                     @if($problem->pdf_path)
-                                        <a class="btn btn-secondary" href="{{ route('judge.problem.pdf', $problem->id) }}" target="_blank" rel="noopener">PDF</a>
+                                        <a class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: var(--font-size-xs);" href="{{ route('judge.problem.pdf', $problem->id) }}" target="_blank" rel="noopener">PDF</a>
                                         @if(auth()->check() && auth()->user()->role === 'admin')
                                             <form method="POST" action="{{ route('judge.admin.problems.media.pdf.remove', $problem->id) }}" style="display: inline;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button class="btn btn-secondary" type="submit">Remove PDF</button>
+                                                <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: var(--font-size-xs);" type="submit">Remove PDF</button>
                                             </form>
                                         @endif
                                     @endif
                                 </td>
-                                <td style="padding: var(--space-3); text-align: right;">
-                                    <a class="btn btn-primary" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
-                                    @if(auth()->check() && auth()->user()->role === 'admin')
-                                        <a class="btn btn-secondary" href="{{ route('judge.problems.edit', $problem->id) }}">Edit Problem</a>
-                                        <form method="POST"
-                                              action="{{ route('judge.admin.problems.destroy', $problem->id) }}"
-                                              onsubmit="return confirm('Are you sure you want to delete this problem and all its test cases?');"
-                                              style="display: inline;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-danger" type="submit">Delete</button>
-                                        </form>
-                                    @endif
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: var(--space-2); align-items: center;">
+                                        <a class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
+                                        @if(auth()->check() && auth()->user()->role === 'admin')
+                                            <a class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);" href="{{ route('judge.problems.edit', $problem->id) }}">Edit</a>
+                                            <form method="POST"
+                                                  action="{{ route('judge.admin.problems.destroy', $problem->id) }}"
+                                                  onsubmit="return confirm('Are you sure you want to delete this problem and all its test cases?');"
+                                                  style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);" type="submit">Delete</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
