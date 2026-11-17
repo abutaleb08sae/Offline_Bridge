@@ -7,15 +7,19 @@
 
     <!-- Section 1: System Status Cards Row -->
     <div>
-        <h2 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-3);">
-            System Infrastructure Status
-        </h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3);">
+            <h2 style="font-size: var(--font-size-xs); font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: var(--space-2);">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary);"></span>
+                System Infrastructure Status
+            </h2>
+            <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: monospace;">Air-Gapped Node #01</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--space-4);">
             @foreach($systemStatus as $item)
                 @php($slug = Str::slug($item['title']))
-                <div class="card" style="padding: var(--space-4);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
-                        <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">
+                <div class="card" style="padding: var(--space-5);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-3);">
+                        <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">
                             {{ $item['title'] }}
                         </span>
                         @if($item['type'] === 'success')
@@ -25,13 +29,13 @@
                         @elseif($item['type'] === 'danger')
                             <span id="badge-{{ $slug }}" class="badge badge-danger">{{ $item['badge'] }}</span>
                         @else
-                            <span id="badge-{{ $slug }}" class="badge badge-neutral" style="background-color: rgba(37, 99, 235, 0.15); color: #3b82f6;">{{ $item['badge'] }}</span>
+                            <span id="badge-{{ $slug }}" class="badge badge-neutral" style="background-color: rgba(37, 99, 235, 0.15); color: #3b82f6; border-color: rgba(37, 99, 235, 0.3);">{{ $item['badge'] }}</span>
                         @endif
                     </div>
-                    <div id="val-{{ $slug }}" style="font-size: var(--font-size-2xl); font-weight: 700; color: var(--text-main); margin-bottom: 0.125rem;">
+                    <div id="val-{{ $slug }}" style="font-size: var(--font-size-2xl); font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem; letter-spacing: -0.02em;">
                         {{ $item['value'] }}
                     </div>
-                    <div id="desc-{{ $slug }}" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                    <div id="desc-{{ $slug }}" style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 500;">
                         {{ $item['desc'] }}
                     </div>
                 </div>
@@ -40,24 +44,24 @@
     </div>
 
     <!-- Section 2: Metrics Stats Row -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--space-4);">
         <!-- Connected Clients -->
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Connected Clients</span>
-                    <div id="statConnectedClients" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Connected Clients</span>
+                    <div id="statConnectedClients" style="font-size: var(--font-size-2xl); font-weight: 800; margin-top: 0.25rem; letter-spacing: -0.02em; color: var(--text-main);">
                         {{ $stats['connected_clients']['current'] }} / {{ $stats['connected_clients']['total'] }}
                     </div>
                 </div>
-                <div style="width: 40px; height: 40px; background-color: var(--color-success-bg); color: var(--color-success-text); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <div class="glass-icon-box emerald">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 11.25v-6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 11.25v-6" />
                     </svg>
                 </div>
             </div>
-            <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
-                <span id="statConnectedClientsPercentage" style="color: var(--color-success-text); font-weight: 600;">{{ $stats['connected_clients']['percentage'] }}%</span> lab capacity occupied
+            <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                <span id="statConnectedClientsPercentage" style="color: var(--color-success-text); font-weight: 700;">{{ $stats['connected_clients']['percentage'] }}%</span> lab capacity occupied
             </div>
         </div>
 
@@ -65,18 +69,18 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Registered Users</span>
-                    <div id="statRegisteredUsers" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Registered Users</span>
+                    <div id="statRegisteredUsers" style="font-size: var(--font-size-2xl); font-weight: 800; margin-top: 0.25rem; letter-spacing: -0.02em; color: var(--text-main);">
                         {{ $stats['registered_users']['total'] }}
                     </div>
                 </div>
-                <div style="width: 40px; height: 40px; background-color: var(--primary-light); color: var(--primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <div class="glass-icon-box blue">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                     </svg>
                 </div>
             </div>
-            <div id="statRegisteredUsersDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statRegisteredUsersDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 500;">
                 {{ $stats['registered_users']['description'] ?? ($stats['registered_users']['students'] . ' Students, ' . $stats['registered_users']['instructors'] . ' Instructors') }}
             </div>
         </div>
@@ -85,18 +89,18 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Supported Apps</span>
-                    <div id="statSupportedApps" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Supported Apps</span>
+                    <div id="statSupportedApps" style="font-size: var(--font-size-2xl); font-weight: 800; margin-top: 0.25rem; letter-spacing: -0.02em; color: var(--text-main);">
                         {{ $stats['supported_apps']['total'] }} Packages
                     </div>
                 </div>
-                <div style="width: 40px; height: 40px; background-color: var(--color-info-bg); color: var(--color-info-text); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <div class="glass-icon-box cyan">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
                     </svg>
                 </div>
             </div>
-            <div id="statSupportedAppsDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statSupportedAppsDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 500;">
                 {{ $stats['supported_apps']['description'] ?? 'Verified for Offline Lab' }}
             </div>
         </div>
@@ -105,18 +109,18 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Files Stored</span>
-                    <div id="statFilesStored" style="font-size: var(--font-size-2xl); font-weight: 700; margin-top: 0.25rem;">
+                    <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Files Stored</span>
+                    <div id="statFilesStored" style="font-size: var(--font-size-2xl); font-weight: 800; margin-top: 0.25rem; letter-spacing: -0.02em; color: var(--text-main);">
                         {{ $stats['files_stored']['count'] }} Files
                     </div>
                 </div>
-                <div style="width: 40px; height: 40px; background-color: var(--color-warning-bg); color: var(--color-warning-text); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                <div class="glass-icon-box amber">
                     <svg xmlns="http://www.w3.org/2000/svg" style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                     </svg>
                 </div>
             </div>
-            <div id="statFilesStoredDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
+            <div id="statFilesStoredDesc" style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 500;">
                 {{ $stats['files_stored']['description'] ?? ('Total Storage: ' . $stats['files_stored']['size']) }}
             </div>
         </div>
@@ -131,7 +135,7 @@
                     <h3 class="card-title">Client Connections Over 12 Hours</h3>
                     <p class="card-subtitle">Real-time workstation activity on the local Master network</p>
                 </div>
-                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 0.35rem 0.85rem; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);">
                     <span class="live-dot"></span>
                     LIVE MONITORING
                 </span>
@@ -140,21 +144,21 @@
             <!-- Custom Clean Responsive Inline SVG Chart -->
             <div style="width: 100%; overflow-x: auto; padding-top: var(--space-2); position: relative;">
                 <!-- Tooltip floating overlay -->
-                <div id="chartTooltip" style="position: absolute; display: none; pointer-events: none; background: #0f172a; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; top: 10px; right: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>
+                <div id="chartTooltip" style="position: absolute; display: none; pointer-events: none; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; top: 10px; right: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.15);"></div>
 
                 <svg id="chartSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 200" style="width: 100%; height: auto; display: block; overflow: visible;">
                     <defs>
                         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.35"/>
+                            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.38"/>
                             <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
                         </linearGradient>
                     </defs>
 
                     <!-- Horizontal Grid Lines -->
-                    <line x1="40" y1="20" x2="630" y2="20" stroke="var(--border-color)" stroke-dasharray="3,3" />
-                    <line x1="40" y1="60" x2="630" y2="60" stroke="var(--border-color)" stroke-dasharray="3,3" />
-                    <line x1="40" y1="100" x2="630" y2="100" stroke="var(--border-color)" stroke-dasharray="3,3" />
-                    <line x1="40" y1="140" x2="630" y2="140" stroke="var(--border-color)" stroke-dasharray="3,3" />
+                    <line x1="40" y1="20" x2="630" y2="20" stroke="var(--border-color)" stroke-dasharray="3,3" opacity="0.7" />
+                    <line x1="40" y1="60" x2="630" y2="60" stroke="var(--border-color)" stroke-dasharray="3,3" opacity="0.7" />
+                    <line x1="40" y1="100" x2="630" y2="100" stroke="var(--border-color)" stroke-dasharray="3,3" opacity="0.7" />
+                    <line x1="40" y1="140" x2="630" y2="140" stroke="var(--border-color)" stroke-dasharray="3,3" opacity="0.7" />
 
                     <!-- Y-Axis Labels -->
                     <g id="chartYAxisGroup">
@@ -210,34 +214,42 @@
 
             <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                 <!-- Add User -->
-                <a href="{{ route('users.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.105a6.375 6.375 0 0112.75 0v.105" />
-                    </svg>
+                <a href="{{ route('users.index') }}" class="glass-btn">
+                    <div class="glass-icon-box blue" style="width: 32px; height: 32px; border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.105a6.375 6.375 0 0112.75 0v.105" />
+                        </svg>
+                    </div>
                     <span>Add New Student / User</span>
                 </a>
 
                 <!-- Register Application -->
-                <a href="{{ route('applications.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--color-info-text);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                <a href="{{ route('applications.index') }}" class="glass-btn">
+                    <div class="glass-icon-box cyan" style="width: 32px; height: 32px; border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
                     <span>Register Application Package</span>
                 </a>
 
                 <!-- Upload File -->
-                <a href="{{ route('labs.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--color-success-text);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
+                <a href="{{ route('labs.index') }}" class="glass-btn">
+                    <div class="glass-icon-box emerald" style="width: 32px; height: 32px; border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                    </div>
                     <span>Upload Lab Material / File</span>
                 </a>
 
                 <!-- Create Backup -->
-                <a href="{{ route('backup.index') }}" class="btn btn-secondary" style="justify-content: flex-start; padding: var(--space-3) var(--space-4); text-decoration: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;color:var(--color-warning-text);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                    </svg>
+                <a href="{{ route('backup.index') }}" class="glass-btn">
+                    <div class="glass-icon-box amber" style="width: 32px; height: 32px; border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                        </svg>
+                    </div>
                     <span>Create Offline DB Backup</span>
                 </a>
             </div>
@@ -251,12 +263,12 @@
                 <h3 class="card-title">Managed Software Applications</h3>
                 <p class="card-subtitle">Local offline applications deployed across client PCs</p>
             </div>
-            <a href="{{ route('applications.index') }}" class="btn btn-secondary" style="font-size: var(--font-size-xs);">View All Apps</a>
+            <a href="{{ route('applications.index') }}" class="glass-btn" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">View All Apps</a>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
             @foreach($applications as $app)
-                <div style="background-color: var(--bg-surface-hover); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2);">
                             <div>
@@ -287,11 +299,11 @@
                         </p>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: var(--space-3); margin-top: var(--space-2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border); padding-top: var(--space-3); margin-top: var(--space-2);">
                         <span style="font-size: var(--font-size-xs); color: var(--text-muted);">
                             Active Installs: <strong style="color: var(--text-main);">{{ $app['installed_clients'] }} PCs</strong>
                         </span>
-                        <button class="btn btn-secondary" style="padding: 0.25rem 0.625rem; font-size: var(--font-size-xs);">Configure</button>
+                        <a href="{{ route('applications.index') }}" class="glass-btn" style="padding: 0.25rem 0.65rem; font-size: var(--font-size-xs);">Configure</a>
                     </div>
                 </div>
             @endforeach
@@ -308,7 +320,7 @@
                     <h3 class="card-title">Connected Workstations (LAN Clients)</h3>
                     <p class="card-subtitle">Active client PCs communicating with Master Host</p>
                 </div>
-                <a href="{{ route('clients.index') }}" class="btn btn-secondary" style="font-size: var(--font-size-xs);">Manage Clients</a>
+                <a href="{{ route('clients.index') }}" class="glass-btn" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">Manage Clients</a>
             </div>
 
             <div class="table-container">
@@ -327,7 +339,7 @@
                         @foreach($clients as $client)
                             <tr>
                                 <td style="font-weight: 600; font-family: monospace;">{{ $client['hostname'] }}</td>
-                                <td><code style="background: var(--bg-surface-hover); padding: 0.15rem 0.35rem; border-radius: 4px;">{{ $client['ip'] }}</code></td>
+                                <td><code style="background: var(--bg-surface-hover); border: 1px solid var(--glass-border); padding: 0.2rem 0.45rem; border-radius: 4px; font-size: 0.8rem;">{{ $client['ip'] }}</code></td>
                                 <td style="font-size: var(--font-size-xs);">{{ $client['user'] }}</td>
                                 <td style="font-size: var(--font-size-xs);">{{ $client['app'] }}</td>
                                 <td>
@@ -357,8 +369,8 @@
                         <h3 class="card-title">Recent Activity Feed</h3>
                         <p class="card-subtitle">Live system events stream</p>
                     </div>
-                    <span class="badge badge-success" style="font-size: 0.65rem; display: inline-flex; align-items: center; gap: 4px;">
-                        <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%;"></span>
+                    <span class="badge badge-success" style="font-size: 0.65rem; display: inline-flex; align-items: center; gap: 5px;">
+                        <span style="display: inline-block; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 6px #10b981;"></span>
                         Live LAN
                     </span>
                 </div>
@@ -394,7 +406,7 @@
             </div>
 
             <!-- Section 8: Network Info Card -->
-            <div class="card" style="background: linear-gradient(135deg, var(--bg-surface), var(--bg-surface-hover));">
+            <div class="card">
                 <div class="card-header">
                     <div>
                         <h3 class="card-title">Master Network Details</h3>
@@ -404,23 +416,23 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: var(--space-3); font-size: var(--font-size-xs);">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px stroke var(--border-color); padding-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Master IP:</span>
                         <strong style="font-family: monospace; color: var(--primary);">{{ $network['master_ip'] }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px stroke var(--border-color); padding-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Hostname:</span>
                         <strong style="font-family: monospace; color: var(--text-main);">{{ $network['hostname'] }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px stroke var(--border-color); padding-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Subnet Mask:</span>
                         <strong style="font-family: monospace; color: var(--text-main);">{{ $network['subnet_mask'] }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px stroke var(--border-color); padding-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Server Port:</span>
                         <strong style="font-family: monospace; color: var(--text-main);">{{ $network['server_port'] }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px stroke var(--border-color); padding-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
                         <span style="color: var(--text-muted);">Default Gateway:</span>
                         <strong style="font-family: monospace; color: var(--text-main);">{{ $network['gateway'] }}</strong>
                     </div>
