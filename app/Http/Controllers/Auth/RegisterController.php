@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,8 @@ class RegisterController extends Controller
         $user->forceFill(['role' => 'user'])->save();
         Auth::login($user);
         $request->session()->regenerate();
+
+        ActivityLogger::log('User Registered', "New student registered: {$user->name} ({$user->email})", 'success', $request);
 
         return redirect()->intended(route('judge.index'));
     }

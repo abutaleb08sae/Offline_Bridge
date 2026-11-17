@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,11 +38,17 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
+        ActivityLogger::log('User Login', "User {$user->name} (" . ucfirst($user->role) . ") connected from workstation", 'info', $request);
+
         return redirect()->route('dashboard');
     }
 
     public function destroy(Request $request): RedirectResponse
     {
+        if ($user = Auth::user()) {
+            ActivityLogger::log('User Logout', "User {$user->name} signed out", 'info', $request);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
