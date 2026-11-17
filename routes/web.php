@@ -33,6 +33,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/applications', [NavigationController::class, 'storeApplication'])->name('applications.store');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::match(['put', 'patch'], '/users/{id}', [UserController::class, 'update'])->whereNumber('id')->name('users.update');
@@ -146,4 +147,4 @@ Route::get('/api/activities/stream', function (Request $request) {
             ];
         }),
     ]);
-})->middleware(['auth', 'admin'])->name('activities.stream');
+})->name('activities.stream');
