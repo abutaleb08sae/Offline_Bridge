@@ -76,7 +76,7 @@
                 </div>
             </div>
             <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
-                {{ $stats['registered_users']['students'] }} Students, {{ $stats['registered_users']['instructors'] }} Instructors
+                {{ $stats['registered_users']['description'] ?? ($stats['registered_users']['students'] . ' Students, ' . $stats['registered_users']['instructors'] . ' Instructors') }}
             </div>
         </div>
 
@@ -96,7 +96,7 @@
                 </div>
             </div>
             <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
-                1 Active Session running
+                {{ $stats['supported_apps']['description'] ?? 'Verified for Offline Lab' }}
             </div>
         </div>
 
@@ -116,7 +116,7 @@
                 </div>
             </div>
             <div style="margin-top: var(--space-3); font-size: var(--font-size-xs); color: var(--text-muted);">
-                Total Storage: {{ $stats['files_stored']['size'] }}
+                {{ $stats['files_stored']['description'] ?? ('Total Storage: ' . $stats['files_stored']['size']) }}
             </div>
         </div>
     </div>
@@ -150,38 +150,36 @@
                     <line x1="40" y1="140" x2="630" y2="140" stroke="var(--border-color)" stroke-dasharray="3,3" />
 
                     <!-- Y-Axis Labels -->
-                    <text x="30" y="24" fill="var(--text-muted)" font-size="11" text-anchor="end">30</text>
-                    <text x="30" y="64" fill="var(--text-muted)" font-size="11" text-anchor="end">20</text>
-                    <text x="30" y="104" fill="var(--text-muted)" font-size="11" text-anchor="end">10</text>
+                    <text x="30" y="24" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ $chartData['peakValue'] ?? 30 }}</text>
+                    <text x="30" y="64" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ round(($chartData['peakValue'] ?? 30) * 0.66) }}</text>
+                    <text x="30" y="104" fill="var(--text-muted)" font-size="11" text-anchor="end">{{ round(($chartData['peakValue'] ?? 30) * 0.33) }}</text>
                     <text x="30" y="144" fill="var(--text-muted)" font-size="11" text-anchor="end">0</text>
 
                     <!-- Area Fill Path -->
-                    <path d="M 50,134.6 L 140,124 L 230,90.6 L 320,72.6 L 410,77.3 L 500,97.3 L 590,117.3 L 590,140 L 50,140 Z" fill="url(#chartGradient)" />
+                    <path d="{{ $chartData['areaPath'] }}" fill="url(#chartGradient)" />
 
                     <!-- Smooth Trend Line Path -->
-                    <path d="M 50,134.6 L 140,124 L 230,90.6 L 320,72.6 L 410,77.3 L 500,97.3 L 590,117.3" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="{{ $chartData['linePath'] }}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
 
-                    <!-- Interactive Data Points -->
-                    <circle cx="50" cy="134.6" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                    <circle cx="140" cy="124" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                    <circle cx="230" cy="90.6" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                    <circle cx="320" cy="72.6" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
-                    <circle cx="410" cy="77.3" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                    <circle cx="500" cy="97.3" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
-                    <circle cx="590" cy="117.3" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+                    <!-- Dynamic Interactive Data Points -->
+                    @foreach($chartData['circles'] as $c)
+                        @if($c['isPeak'])
+                            <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+                        @else
+                            <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+                        @endif
+                    @endforeach
 
                     <!-- Peak Value Callout -->
-                    <rect x="295" y="45" width="50" height="20" rx="4" fill="#2563eb" />
-                    <text x="320" y="59" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">28 PCs</text>
+                    <rect x="{{ $chartData['peakRectX'] }}" y="{{ $chartData['peakRectY'] }}" width="60" height="20" rx="4" fill="#2563eb" />
+                    <text x="{{ $chartData['peakTextX'] }}" y="{{ $chartData['peakTextY'] }}" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">{{ $chartData['peakLabel'] }}</text>
 
                     <!-- X-Axis Labels -->
-                    <text x="50" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">08:00</text>
-                    <text x="140" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">10:00</text>
-                    <text x="230" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">12:00</text>
-                    <text x="320" y="165" fill="var(--text-muted)" font-size="11" font-weight="600" text-anchor="middle">14:00 (Peak)</text>
-                    <text x="410" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">16:00</text>
-                    <text x="500" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">18:00</text>
-                    <text x="590" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle">20:00</text>
+                    @foreach($chartData['circles'] as $c)
+                        <text x="{{ $c['cx'] }}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" {{ $c['isPeak'] ? 'font-weight=600' : '' }}>
+                            {{ $c['label'] }}{{ $c['isPeak'] ? ' (Peak)' : '' }}
+                        </text>
+                    @endforeach
                 </svg>
             </div>
         </div>

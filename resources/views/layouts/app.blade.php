@@ -168,7 +168,7 @@
             </div>
             <div class="lan-card">
                 <div class="lan-title">Master Local Host</div>
-                <div class="lan-ip">192.168.1.100</div>
+                <div class="lan-ip">{{ \App\Services\SystemTelemetryService::getHostIp() }}</div>
             </div>
         </div>
     </aside>
@@ -189,12 +189,18 @@
 
             <div class="topbar-right">
                 <!-- Network Status Indicator -->
+                @php($isInternetOnline = \App\Services\SystemTelemetryService::checkInternetConnectivity())
                 <div class="network-status-badge">
                     <span class="status-dot lan-online"></span>
                     <span>LAN: ONLINE</span>
                     <span class="status-sep">|</span>
-                    <span class="status-dot internet-offline"></span>
-                    <span>Internet: OFFLINE</span>
+                    @if($isInternetOnline)
+                        <span class="status-dot lan-online" style="background-color: #10b981;"></span>
+                        <span>Internet: ONLINE</span>
+                    @else
+                        <span class="status-dot internet-offline"></span>
+                        <span>Internet: OFFLINE</span>
+                    @endif
                 </div>
 
                 <!-- Live Clock -->
@@ -215,14 +221,24 @@
                     </svg>
                 </button>
 
-                <!-- Admin User Dropdown Placeholder -->
-                <div class="user-menu">
-                    <div class="user-avatar">AD</div>
-                    <div class="user-details">
-                        <span class="user-name">Admin Master</span>
-                        <span class="user-role">System Administrator</span>
+                <!-- Dynamic User Menu -->
+                @auth
+                    <div class="user-menu">
+                        <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 2)) }}</div>
+                        <div class="user-details">
+                            <span class="user-name">{{ auth()->user()->name }}</span>
+                            <span class="user-role">{{ ucfirst(auth()->user()->role) }}</span>
+                        </div>
                     </div>
-                </div>
+                @else
+                    <div class="user-menu">
+                        <div class="user-avatar" style="background-color: var(--text-muted);">GT</div>
+                        <div class="user-details">
+                            <span class="user-name">Guest Terminal</span>
+                            <span class="user-role">Student Session</span>
+                        </div>
+                    </div>
+                @endauth
             </div>
         </header>
 

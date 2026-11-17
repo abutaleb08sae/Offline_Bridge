@@ -152,56 +152,38 @@
                 <svg xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
         </div>
-        <form onsubmit="event.preventDefault(); closeModal('registerAppModal'); showToast('Application Registered', 'Software package registered in Master DB (UI Demo)', 'success');">
+        <form action="{{ route('applications.store') }}" method="POST">
+            @csrf
             <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
                 <div class="form-group" style="grid-column: span 1;">
                     <label class="form-label" for="appName">Application Name</label>
-                    <input type="text" id="appName" class="form-input" placeholder="e.g. Wireshark" required>
+                    <input type="text" id="appName" name="name" class="form-input" placeholder="e.g. Wireshark" required>
                 </div>
                 <div class="form-group" style="grid-column: span 1;">
                     <label class="form-label" for="appVersion">Version</label>
-                    <input type="text" id="appVersion" class="form-input" placeholder="e.g. v4.0.6" required>
+                    <input type="text" id="appVersion" name="version" class="form-input" placeholder="e.g. v4.0.6">
                 </div>
                 <div class="form-group" style="grid-column: span 1;">
-                    <label class="form-label" for="appCategory">Category</label>
-                    <input type="text" id="appCategory" class="form-input" placeholder="e.g. Network Protocol Analysis" required>
+                    <label class="form-label" for="requiredPort">Required Local Port</label>
+                    <input type="text" id="requiredPort" name="required_port" class="form-input" placeholder="e.g. TCP 38000">
                 </div>
                 <div class="form-group" style="grid-column: span 1;">
-                    <label class="form-label" for="installType">Installation Type</label>
-                    <select id="installType" class="form-select">
-                        <option value="client">Client Application</option>
-                        <option value="service">Local Service / Master Host</option>
-                    </select>
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
                     <label class="form-label" for="offlineStatus">Offline Status Rating</label>
-                    <select id="offlineStatus" class="form-select">
+                    <select id="offlineStatus" name="offline_status" class="form-select">
+                        <option value="Supported (Fully Offline)">Supported (Fully Offline)</option>
+                        <option value="Partial (Requires Bypass)">Partial (Requires Bypass)</option>
                         <option value="Testing">Testing</option>
-                        <option value="Supported">Supported (Fully Offline)</option>
-                        <option value="Partial">Partial (Requires Bypass)</option>
-                        <option value="Unsupported">Unsupported (Cloud Dependent)</option>
+                        <option value="Unsupported (Cloud Dependent)">Unsupported (Cloud Dependent)</option>
                     </select>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
-                    <label class="form-label" for="appDescription">Description</label>
-                    <textarea id="appDescription" class="form-textarea" rows="2" placeholder="Brief explanation of software utility in lab..."></textarea>
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label class="form-label" for="requiredServices">Required Local Services</label>
-                    <input type="text" id="requiredServices" class="form-input" placeholder="e.g. Npcap driver, local TCP port 8000">
-                </div>
-                <div class="form-group" style="grid-column: span 1;">
-                    <label class="form-label" for="supportedFeatures">Supported Offline Features</label>
-                    <textarea id="supportedFeatures" class="form-textarea" rows="2" placeholder="Features working without Internet..."></textarea>
-                </div>
-                <div class="form-group" style="grid-column: span 1;">
-                    <label class="form-label" for="internetFeatures">Internet-Dependent Features</label>
-                    <textarea id="internetFeatures" class="form-textarea" rows="2" placeholder="Features failing when offline..."></textarea>
+                    <label class="form-label" for="appDescription">Description & Notes</label>
+                    <textarea id="appDescription" name="notes" class="form-textarea" rows="3" placeholder="Brief explanation of software utility in offline lab, port usage, bypass strategies..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('registerAppModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Register Application</button>
+                <button type="submit" class="btn btn-primary">Save & Register Application</button>
             </div>
         </form>
     </div>

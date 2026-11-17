@@ -27,11 +27,16 @@
         </div>
 
         <!-- Log Level Tabs -->
+        @php($allLogs = collect($logs))
+        @php($allCount = $allLogs->count())
+        @php($infoCount = $allLogs->where('level', 'INFO')->count())
+        @php($warnCount = $allLogs->where('level', 'WARN')->count())
+        @php($errorCount = $allLogs->where('level', 'ERROR')->count())
         <div class="tab-container">
-            <button class="tab-btn active" onclick="filterLogLevel('ALL', this)">All Levels (5)</button>
-            <button class="tab-btn" onclick="filterLogLevel('INFO', this)">INFO (3)</button>
-            <button class="tab-btn" onclick="filterLogLevel('WARN', this)">WARN (1)</button>
-            <button class="tab-btn" onclick="filterLogLevel('ERROR', this)">ERROR (1)</button>
+            <button class="tab-btn active" onclick="filterLogLevel('ALL', this)">All Levels ({{ $allCount }})</button>
+            <button class="tab-btn" onclick="filterLogLevel('INFO', this)">INFO ({{ $infoCount }})</button>
+            <button class="tab-btn" onclick="filterLogLevel('WARN', this)">WARN ({{ $warnCount }})</button>
+            <button class="tab-btn" onclick="filterLogLevel('ERROR', this)">ERROR ({{ $errorCount }})</button>
         </div>
 
         <!-- Dense Log Table -->
