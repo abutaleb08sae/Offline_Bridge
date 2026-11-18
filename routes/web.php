@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [NavigationController::class, 'dashboard'])->name('dashboard');
-Route::get('/applications', [NavigationController::class, 'applications'])->name('applications.index');
 Route::get('/files', [LabTaskController::class, 'index'])->name('files.index');
 
 Route::middleware('guest')->group(function () {
@@ -33,6 +32,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/applications', [NavigationController::class, 'applications'])->name('applications.index');
     Route::post('/applications', [NavigationController::class, 'storeApplication'])->name('applications.store');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');

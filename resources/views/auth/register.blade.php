@@ -23,7 +23,7 @@
 <body>
     <main class="card" style="width: min(100%, 480px); padding: var(--space-8);">
         <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);">
-            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #2563eb, #3b82f6); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary), #147A7D); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; box-shadow: 0 4px 14px rgba(13, 92, 94, 0.35);">
                 OB
             </div>
             <div>

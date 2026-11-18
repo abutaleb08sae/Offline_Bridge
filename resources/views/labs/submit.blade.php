@@ -20,7 +20,7 @@
     <!-- Top Minimal Navigation Bar -->
     <header style="max-width: 720px; width: 100%; margin: 0 auto var(--space-6); display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: var(--space-3);">
-            <div class="glass-icon-box blue" style="width: 44px; height: 44px; font-weight: 800; font-size: 1.15rem; border-radius: 14px;">
+            <div class="glass-icon-box teal" style="width: 44px; height: 44px; font-weight: 800; font-size: 1.15rem; border-radius: 14px;">
                 OB
             </div>
             <div>

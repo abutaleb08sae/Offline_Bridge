@@ -1,8 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Master Dashboard Overview')
+@php
+    $isAdmin = isset($isAdmin) ? $isAdmin : (auth()->check() && auth()->user()->role === 'admin');
+@endphp
+
+@section('title', $isAdmin ? 'Master Dashboard Overview' : 'Student Lab Workspace')
 
 @section('content')
+@if($isAdmin)
 <div style="display: flex; flex-direction: column; gap: var(--space-6);">
 
     <!-- Section 1: System Status Cards Row -->
@@ -143,14 +148,14 @@
 
             <!-- Custom Clean Responsive Inline SVG Chart -->
             <div style="width: 100%; overflow-x: auto; padding-top: var(--space-2); position: relative;">
-                <!-- Tooltip floating overlay -->
-                <div id="chartTooltip" style="position: absolute; display: none; pointer-events: none; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; top: 10px; right: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.3); border: 1px solid rgba(255, 255, 255, 0.15);"></div>
+                <!-- Tooltip floating overlay (Optimized High-Performance) -->
+                <div id="chartTooltip" style="position: absolute; display: none; pointer-events: none; background: rgba(7, 35, 36, 0.95); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; top: 10px; right: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); border: 1px solid rgba(255, 255, 255, 0.15);"></div>
 
                 <svg id="chartSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 200" style="width: 100%; height: auto; display: block; overflow: visible;">
                     <defs>
                         <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.38"/>
-                            <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
+                            <stop offset="0%" stop-color="#0D5C5E" stop-opacity="0.32"/>
+                            <stop offset="100%" stop-color="#0D5C5E" stop-opacity="0.0"/>
                         </linearGradient>
                     </defs>
 
@@ -171,23 +176,23 @@
                     <!-- Area Fill Path -->
                     <path id="chartAreaPath" d="{{ $chartData['areaPath'] }}" fill="url(#chartGradient)" style="transition: d 0.4s ease;" />
 
-                    <!-- Smooth Trend Line Path -->
-                    <path id="chartLinePath" d="{{ $chartData['linePath'] }}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition: d 0.4s ease;" />
+                    <!-- Smooth Trend Line Path: Deep Teal Green -->
+                    <path id="chartLinePath" d="{{ $chartData['linePath'] }}" fill="none" stroke="#0D5C5E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition: d 0.4s ease;" />
 
-                    <!-- Dynamic Interactive Data Points -->
+                    <!-- Dynamic Interactive Data Points (Deep Teal + Coral Orange Peak) -->
                     <g id="chartCirclesGroup">
                         @foreach($chartData['circles'] as $c)
                             @if($c['isPeak'])
-                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
+                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="5.5" fill="#FF5E3A" stroke="#ffffff" stroke-width="2.5" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
                             @else
-                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
+                                <circle cx="{{ $c['cx'] }}" cy="{{ $c['cy'] }}" r="4" fill="#ffffff" stroke="#0D5C5E" stroke-width="2.5" class="chart-point" data-val="{{ $c['value'] }}" data-lbl="{{ $c['label'] }}" />
                             @endif
                         @endforeach
                     </g>
 
-                    <!-- Peak Value Callout -->
+                    <!-- Peak Value Callout Highlight: Coral Orange -->
                     <g id="chartPeakGroup">
-                        <rect id="chartPeakRect" x="{{ $chartData['peakRectX'] }}" y="{{ $chartData['peakRectY'] }}" width="{{ $chartData['peakRectWidth'] ?? 54 }}" height="20" rx="4" fill="#2563eb" />
+                        <rect id="chartPeakRect" x="{{ $chartData['peakRectX'] }}" y="{{ $chartData['peakRectY'] }}" width="{{ $chartData['peakRectWidth'] ?? 54 }}" height="20" rx="4" fill="#FF5E3A" />
                         <text id="chartPeakText" x="{{ $chartData['peakTextX'] }}" y="{{ $chartData['peakTextY'] }}" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle">{{ $chartData['peakLabel'] }}</text>
                     </g>
 
@@ -448,6 +453,298 @@
     </div>
 
 </div>
+@else
+{{-- STUDENT LAB WORKSPACE: HOW TO GET A FILE, SOLVE A PROBLEM, AND SUBMIT IT --}}
+<div style="display: flex; flex-direction: column; gap: var(--space-6);">
+
+    <!-- Student Welcome & Workstation Banner -->
+    <div class="card" style="padding: var(--space-6); background: linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(247, 241, 230, 0.92)); border-color: rgba(13, 92, 94, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4);">
+            <div style="display: flex; align-items: center; gap: var(--space-4);">
+                <div class="glass-icon-box teal" style="width: 52px; height: 52px; border-radius: 16px; font-weight: 800; font-size: 1.25rem;">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'ST', 0, 2)) }}
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: 2px;">
+                        <h2 style="font-size: var(--font-size-xl); font-weight: 800; color: var(--text-main); margin: 0; line-height: 1.2;">
+                            Welcome, {{ auth()->user()->name ?? 'Student' }}
+                        </h2>
+                        <span class="badge badge-coral">STUDENT WORKSTATION</span>
+                    </div>
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">
+                        Offline Computer Lab Workstation • Connected to Master Lab Controller
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                <div class="network-status-badge">
+                    <span class="status-dot lan-online"></span>
+                    <span>LAN: ONLINE</span>
+                    <span class="status-sep">|</span>
+                    <span style="font-family: monospace; color: var(--text-muted);">{{ request()->ip() }}</span>
+                </div>
+                <span class="badge badge-success">AIR-GAPPED LAB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: 3-Step Workflow Overview (Get File -> Solve Problem -> Submit) -->
+    <div>
+        <div style="margin-bottom: var(--space-3);">
+            <h3 style="font-size: var(--font-size-xs); font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: var(--space-2);">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 8px var(--color-accent);"></span>
+                How to Complete Your Lab Work (3 Easy Steps)
+            </h3>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4);">
+            <!-- Step 1: Download Lab Materials -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid #0D5C5E;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                        <span class="badge badge-coral" style="font-size: 0.65rem;">STEP 1</span>
+                        <div class="glass-icon-box teal" style="width: 36px; height: 36px; border-radius: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-2);">
+                        1. Get Lab Files & Tasks
+                    </h4>
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.5; margin-bottom: var(--space-4);">
+                        Download assignment instructions, question sheets, starter source code, and Cisco Packet Tracer (<code>.pkt</code>) network lab files provided by your instructor.
+                    </p>
+                </div>
+
+                <div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-3); font-weight: 600;">
+                        <span style="color: var(--primary); font-weight: 700;">{{ $totalLabTasks ?? 0 }}</span> lab files available for download
+                    </div>
+                    <a href="{{ route('labs.index') }}" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2);">
+                        <span>Browse & Download Files</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 2: Solve on Local Judge -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid #0D5C5E;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                        <span class="badge badge-coral" style="font-size: 0.65rem;">STEP 2</span>
+                        <div class="glass-icon-box teal" style="width: 36px; height: 36px; border-radius: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m8 8-4 4 4 4m8-8 4 4-4 4m-3-7-2 6" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-2);">
+                        2. Solve on Offline Judge
+                    </h4>
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.5; margin-bottom: var(--space-4);">
+                        Practice competitive programming problems offline. Read problem statements, code in C++, C, Python, or Java, and get automated offline compilation verdicts.
+                    </p>
+                </div>
+
+                <div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-3); font-weight: 600;">
+                        <span style="color: var(--primary); font-weight: 700;">{{ $totalJudgeProblems ?? 0 }}</span> offline judge problems active
+                    </div>
+                    <a href="{{ route('judge.index') }}" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2);">
+                        <span>Open Local Judge</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Step 3: Submit Solution -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between; border-top: 3px solid #FF5E3A;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                        <span class="badge badge-coral" style="font-size: 0.65rem;">STEP 3</span>
+                        <div class="glass-icon-box coral" style="width: 36px; height: 36px; border-radius: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <h4 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-2);">
+                        3. Submit Completed Task
+                    </h4>
+                    <p style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.5; margin-bottom: var(--space-4);">
+                        Submit your code, report, or Packet Tracer (<code>.pkt</code>) file. The local Master controller immediately logs an immutable SHA-256 submission receipt.
+                    </p>
+                </div>
+
+                <div>
+                    <div style="font-size: var(--font-size-xs); color: var(--text-muted); margin-bottom: var(--space-3); font-weight: 600;">
+                        <span style="color: var(--color-accent); font-weight: 700;">{{ $mySubmissionsCount ?? 0 }}</span> submissions uploaded by you
+                    </div>
+                    <a href="{{ route('labs.submit') }}" class="btn btn-accent" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--space-2);">
+                        <span>Submit Solution Now</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section: Available Lab Tasks & My Recent Submissions Grid -->
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-6);">
+        <!-- Left: Available Lab Materials & Active Problems -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <!-- Available Lab Materials Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Available Lab Materials</h3>
+                        <p class="card-subtitle">Download tasks & network topologies distributed by instructor</p>
+                    </div>
+                    <a href="{{ route('labs.index') }}" style="font-size: var(--font-size-xs); color: var(--primary); font-weight: 700;">View All &rarr;</a>
+                </div>
+
+                @if(isset($labTasks) && $labTasks->count() > 0)
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        @foreach($labTasks as $task)
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3); background: var(--bg-surface-hover); border: 1px solid var(--glass-border); border-radius: 12px; gap: var(--space-3);">
+                                <div style="display: flex; align-items: center; gap: var(--space-3); min-width: 0;">
+                                    <div class="glass-icon-box teal" style="width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                        </svg>
+                                    </div>
+                                    <div style="min-width: 0;">
+                                        <div style="font-weight: 700; font-size: var(--font-size-sm); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            {{ $task->title }}
+                                        </div>
+                                        <div style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: monospace;">
+                                            {{ $task->file_name }} • {{ $task->formatted_file_size }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{{ route('labs.download', $task->id) }}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs); flex-shrink: 0;">
+                                    Download
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="empty-state-card">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin: 0;">No lab materials have been published by instructors yet.</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Active Judge Problems Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Practice on Local Judge</h3>
+                        <p class="card-subtitle">Solve problems offline with automated testcase evaluation</p>
+                    </div>
+                    <a href="{{ route('judge.index') }}" style="font-size: var(--font-size-xs); color: var(--primary); font-weight: 700;">Judge Arena &rarr;</a>
+                </div>
+
+                @if(isset($judgeProblems) && $judgeProblems->count() > 0)
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        @foreach($judgeProblems as $problem)
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-3); background: var(--bg-surface-hover); border: 1px solid var(--glass-border); border-radius: 12px; gap: var(--space-3);">
+                                <div style="min-width: 0;">
+                                    <div style="font-weight: 700; font-size: var(--font-size-sm); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ $problem->title }}
+                                    </div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                                        Time Limit: {{ $problem->time_limit ?? 1 }}s • Memory: {{ $problem->memory_limit ?? 256 }}MB
+                                    </div>
+                                </div>
+                                <a href="{{ route('judge.show', $problem->id) }}" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs); flex-shrink: 0;">
+                                    Solve
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="empty-state-card">
+                        <p style="font-size: var(--font-size-sm); color: var(--text-muted); margin: 0;">No active judge problems found.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Right: My Recent Submissions & Workstation Guidelines -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+            <!-- My Recent Submissions Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">My Recent Submissions</h3>
+                        <p class="card-subtitle">Your uploaded assignments & solutions</p>
+                    </div>
+                </div>
+
+                @if(isset($mySubmissions) && $mySubmissions->count() > 0)
+                    <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                        @foreach($mySubmissions as $sub)
+                            <div style="padding: var(--space-3); background: var(--bg-surface-hover); border: 1px solid var(--glass-border); border-radius: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <strong style="font-size: var(--font-size-sm); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        {{ $sub->file_name }}
+                                    </strong>
+                                    <span class="badge badge-success">SUBMITTED</span>
+                                </div>
+                                <div style="font-size: var(--font-size-xs); color: var(--text-muted); display: flex; justify-content: space-between;">
+                                    <span>Task: {{ $sub->labTask->title ?? 'General' }}</span>
+                                    <span>{{ $sub->created_at ? $sub->created_at->diffForHumans() : 'Recently' }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                        <a href="{{ route('labs.submit') }}" class="btn btn-secondary" style="width: 100%; margin-top: var(--space-2); font-size: var(--font-size-xs);">
+                            + Submit Another File
+                        </a>
+                    </div>
+                @else
+                    <div class="empty-state-card" style="padding: var(--space-6) var(--space-4);">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--color-accent-light); color: var(--color-accent); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3);">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 22px; height: 22px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h4 style="font-size: var(--font-size-sm); font-weight: 700; color: var(--text-main); margin-bottom: 4px;">No Submissions Yet</h4>
+                        <p style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.5; margin-bottom: var(--space-4);">
+                            Once you solve a task or finish your Packet Tracer file, upload it here to get a verified receipt.
+                        </p>
+                        <a href="{{ route('labs.submit') }}" class="btn btn-accent" style="font-size: var(--font-size-xs);">
+                            Submit First Solution &rarr;
+                        </a>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Offline Workstation Quick Guide Card -->
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <h3 class="card-title" style="margin-bottom: var(--space-3); font-size: var(--font-size-base);">Lab Instructions & Guidelines</h3>
+                <ul style="padding-left: var(--space-4); font-size: var(--font-size-xs); color: var(--text-muted); display: flex; flex-direction: column; gap: var(--space-2); line-height: 1.5;">
+                    <li><strong>100% Offline LAN:</strong> Everything runs locally on the university master lab network. No WAN or internet required.</li>
+                    <li><strong>Instant Verdicts:</strong> Judge submissions are automatically compiled and evaluated in sandbox containers locally.</li>
+                    <li><strong>Naming Standard:</strong> Label your submission files clearly (e.g. <code>[StudentID]_[TaskName].pkt</code>) before uploading.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+@endif
 
 <style>
 .live-dot {
@@ -468,6 +765,8 @@
     border: 2px solid #10b981;
     animation: liveDotPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     pointer-events: none;
+    will-change: transform, opacity;
+    transform: translateZ(0);
 }
 
 @keyframes liveDotPulse {
@@ -508,6 +807,7 @@
             });
         }
 
+        let lastChartJson = '';
         // 1. Live Telemetry Polling (Every 3 seconds)
         function fetchLiveTelemetry() {
             fetch("{{ route('telemetry.live') }}")
@@ -515,69 +815,76 @@
                 .then(data => {
                     if (!data) return;
 
-                    // Sync Chart SVG Paths & Data
+                    // Sync Chart SVG Paths & Data (Only redraw when telemetry changes)
                     if (data.chart) {
-                        const areaPath = document.getElementById('chartAreaPath');
-                        const linePath = document.getElementById('chartLinePath');
-                        if (areaPath && data.chart.areaPath) areaPath.setAttribute('d', data.chart.areaPath);
-                        if (linePath && data.chart.linePath) linePath.setAttribute('d', data.chart.linePath);
+                        const currentChartJson = JSON.stringify(data.chart);
+                        if (currentChartJson !== lastChartJson) {
+                            lastChartJson = currentChartJson;
 
-                        // Update Circles
-                        const circlesGroup = document.getElementById('chartCirclesGroup');
-                        if (circlesGroup && data.chart.circles) {
-                            let circlesHtml = '';
-                            data.chart.circles.forEach(c => {
-                                if (c.isPeak) {
-                                    circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="5" fill="#2563eb" stroke="#ffffff" stroke-width="2" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
-                                } else {
-                                    circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="4" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
-                                }
-                            });
-                            circlesGroup.innerHTML = circlesHtml;
-                            attachChartTooltips();
-                        }
+                            const areaPath = document.getElementById('chartAreaPath');
+                            const linePath = document.getElementById('chartLinePath');
+                            if (areaPath && data.chart.areaPath) areaPath.setAttribute('d', data.chart.areaPath);
+                            if (linePath && data.chart.linePath) linePath.setAttribute('d', data.chart.linePath);
 
-                        // Update Peak Badge
-                        const peakRect = document.getElementById('chartPeakRect');
-                        const peakText = document.getElementById('chartPeakText');
-                        if (peakRect && peakText) {
-                            peakRect.setAttribute('x', data.chart.peakRectX);
-                            peakRect.setAttribute('y', data.chart.peakRectY);
-                            if (data.chart.peakRectWidth) peakRect.setAttribute('width', data.chart.peakRectWidth);
-                            peakText.setAttribute('x', data.chart.peakTextX);
-                            peakText.setAttribute('y', data.chart.peakTextY);
-                            peakText.textContent = data.chart.peakLabel;
-                        }
+                            // Update Circles (Deep Teal + Coral Orange Peak)
+                            const circlesGroup = document.getElementById('chartCirclesGroup');
+                            if (circlesGroup && data.chart.circles) {
+                                let circlesHtml = '';
+                                data.chart.circles.forEach(c => {
+                                    if (c.isPeak) {
+                                        circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="5.5" fill="#FF5E3A" stroke="#ffffff" stroke-width="2.5" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
+                                    } else {
+                                        circlesHtml += `<circle cx="${c.cx}" cy="${c.cy}" r="4" fill="#ffffff" stroke="#0D5C5E" stroke-width="2.5" class="chart-point" data-val="${c.value}" data-lbl="${c.label}" />`;
+                                    }
+                                });
+                                circlesGroup.innerHTML = circlesHtml;
+                                attachChartTooltips();
+                            }
 
-                        // Update X Axis
-                        const xAxisGroup = document.getElementById('chartXAxisGroup');
-                        if (xAxisGroup && data.chart.circles) {
-                            let xHtml = '';
-                            data.chart.circles.forEach(c => {
-                                const peakAttr = c.isPeak ? 'font-weight="600"' : '';
-                                const peakSuffix = c.isPeak ? ' (Peak)' : '';
-                                xHtml += `<text x="${c.cx}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" ${peakAttr}>${c.label}${peakSuffix}</text>`;
-                            });
-                            xAxisGroup.innerHTML = xHtml;
-                        }
+                            // Update Peak Badge
+                            const peakRect = document.getElementById('chartPeakRect');
+                            const peakText = document.getElementById('chartPeakText');
+                            if (peakRect && peakText) {
+                                peakRect.setAttribute('x', data.chart.peakRectX);
+                                peakRect.setAttribute('y', data.chart.peakRectY);
+                                if (data.chart.peakRectWidth) peakRect.setAttribute('width', data.chart.peakRectWidth);
+                                peakText.setAttribute('x', data.chart.peakTextX);
+                                peakText.setAttribute('y', data.chart.peakTextY);
+                                peakText.textContent = data.chart.peakLabel;
+                            }
 
-                        // Update Y Axis
-                        if (data.chart.yLabels) {
-                            const y0 = document.getElementById('chartY0');
-                            const y1 = document.getElementById('chartY1');
-                            const y2 = document.getElementById('chartY2');
-                            if (y0) y0.textContent = data.chart.yLabels[0];
-                            if (y1) y1.textContent = data.chart.yLabels[1];
-                            if (y2) y2.textContent = data.chart.yLabels[2];
+                            // Update X Axis
+                            const xAxisGroup = document.getElementById('chartXAxisGroup');
+                            if (xAxisGroup && data.chart.circles) {
+                                let xHtml = '';
+                                data.chart.circles.forEach(c => {
+                                    const peakAttr = c.isPeak ? 'font-weight="600"' : '';
+                                    const peakSuffix = c.isPeak ? ' (Peak)' : '';
+                                    xHtml += `<text x="${c.cx}" y="165" fill="var(--text-muted)" font-size="11" text-anchor="middle" ${peakAttr}>${c.label}${peakSuffix}</text>`;
+                                });
+                                xAxisGroup.innerHTML = xHtml;
+                            }
+
+                            // Update Y Axis
+                            if (data.chart.yLabels) {
+                                const y0 = document.getElementById('chartY0');
+                                const y1 = document.getElementById('chartY1');
+                                const y2 = document.getElementById('chartY2');
+                                if (y0) y0.textContent = data.chart.yLabels[0];
+                                if (y1) y1.textContent = data.chart.yLabels[1];
+                                if (y2) y2.textContent = data.chart.yLabels[2];
+                            }
                         }
                     }
 
-                    // Sync Connected Clients Card with Live Data
+                    // Sync Connected Clients Card with Live Data (Only update if value changed)
                     if (data.stats && data.stats.connected_clients) {
                         const clientVal = document.getElementById('statConnectedClients');
                         const clientPct = document.getElementById('statConnectedClientsPercentage');
-                        if (clientVal) clientVal.textContent = `${data.stats.connected_clients.current} / ${data.stats.connected_clients.total}`;
-                        if (clientPct) clientPct.textContent = `${data.stats.connected_clients.percentage}%`;
+                        const newClientText = `${data.stats.connected_clients.current} / ${data.stats.connected_clients.total}`;
+                        const newPctText = `${data.stats.connected_clients.percentage}%`;
+                        if (clientVal && clientVal.textContent.trim() !== newClientText) clientVal.textContent = newClientText;
+                        if (clientPct && clientPct.textContent.trim() !== newPctText) clientPct.textContent = newPctText;
                     }
 
                     // Sync System Infrastructure Cards
@@ -663,4 +970,27 @@
         setInterval(sendClientHeartbeat, 15000);
     })();
 </script>
+@else
+<script>
+    // Student Workstation Heartbeat (LAN status check)
+    (function() {
+        function sendClientHeartbeat() {
+            fetch("{{ route('client.heartbeat') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    hostname: 'STUDENT-WORKSTATION',
+                    user: '{{ auth()->user()->name ?? "Student" }}',
+                    action: 'Student Lab Workspace Active'
+                })
+            }).catch(() => {});
+        }
+        sendClientHeartbeat();
+        setInterval(sendClientHeartbeat, 20000);
+    })();
+</script>
+@endif
 @endsection

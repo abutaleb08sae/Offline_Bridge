@@ -11,23 +11,61 @@ use Illuminate\Http\Request;
 class NavigationController extends Controller
 {
     /**
-     * Master Dashboard Overview.
+     * Dashboard Overview (Role-Aware: Master Overview for Admin, Lab Workspace for Students).
      */
     public function dashboard()
     {
+        $user = auth()->user();
+        $isAdmin = $user && $user->role === 'admin';
+
         $activities = collect([]);
         try {
             $activities = ActivityLog::recent(10)->get();
         } catch (\Throwable $e) {}
 
+        // Data for student workspace overview
+        $labTasks = collect([]);
+        $judgeProblems = collect([]);
+        $mySubmissions = collect([]);
+        $totalLabTasks = 0;
+        $totalJudgeProblems = 0;
+        $mySubmissionsCount = 0;
+
+        try {
+            $totalLabTasks = \App\Models\LabTask::count();
+            $totalJudgeProblems = \App\Models\JudgeProblem::count();
+            $labTasks = \App\Models\LabTask::latest()->take(6)->get();
+            $judgeProblems = \App\Models\JudgeProblem::latest()->take(6)->get();
+
+            if ($user) {
+                $mySubmissions = \App\Models\Submission::where('user_id', $user->id)
+                    ->orWhere('student_name', $user->name)
+                    ->with('labTask')
+                    ->latest()
+                    ->take(5)
+                    ->get();
+                $mySubmissionsCount = \App\Models\Submission::where('user_id', $user->id)
+                    ->orWhere('student_name', $user->name)
+                    ->count();
+            }
+        } catch (\Throwable $e) {}
+
         return view('dashboard', [
-            'systemStatus' => SystemTelemetryService::getSystemStatus(),
-            'stats'        => SystemTelemetryService::getStats(),
-            'applications' => SystemTelemetryService::getApplications(),
-            'clients'      => SystemTelemetryService::getConnectedClients(),
-            'activities'   => $activities,
-            'chartData'    => SystemTelemetryService::getChartData(),
-            'network'      => SystemTelemetryService::getNetworkDetails(),
+            'isAdmin'             => $isAdmin,
+            'systemStatus'        => SystemTelemetryService::getSystemStatus(),
+            'stats'               => SystemTelemetryService::getStats(),
+            'applications'        => SystemTelemetryService::getApplications(),
+            'clients'             => SystemTelemetryService::getConnectedClients(),
+            'activities'          => $activities,
+            'chartData'           => SystemTelemetryService::getChartData(),
+            'network'             => SystemTelemetryService::getNetworkDetails(),
+            // Student Workspace Data
+            'labTasks'            => $labTasks,
+            'judgeProblems'       => $judgeProblems,
+            'mySubmissions'       => $mySubmissions,
+            'totalLabTasks'       => $totalLabTasks,
+            'totalJudgeProblems'  => $totalJudgeProblems,
+            'mySubmissionsCount'  => $mySubmissionsCount,
         ]);
     }
 
