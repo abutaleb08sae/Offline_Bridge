@@ -456,19 +456,28 @@
     background-color: #10b981;
     border-radius: 50%;
     display: inline-block;
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    animation: liveDotPulse 1.8s infinite;
+    position: relative;
+    vertical-align: middle;
+}
+
+.live-dot::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid #10b981;
+    animation: liveDotPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    pointer-events: none;
 }
 
 @keyframes liveDotPulse {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
 }
 
 .chart-point {
     cursor: pointer;
-    transition: r 0.2s ease, stroke-width 0.2s ease;
+    transition: r 0.15s ease, stroke-width 0.15s ease;
 }
 
 .chart-point:hover {
