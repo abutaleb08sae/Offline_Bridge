@@ -785,6 +785,7 @@
 }
 </style>
 
+@if($isAdmin)
 <script>
     // Live Monitoring Telemetry Poller (Pure local LAN vanilla JS - Zero external dependencies)
     (function() {
