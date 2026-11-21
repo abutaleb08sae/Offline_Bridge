@@ -532,4 +532,36 @@ line two</pre>',
             'verdict' => 'Accepted',
         ]);
     }
+
+    public function test_student_problem_editor_disables_clipboard_actions(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $problem = JudgeProblem::create([
+            'title' => 'Restricted editor',
+            'description' => 'Write a solution manually.',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('judge.show', $problem->id));
+
+        $response->assertOk()
+            ->assertSee('autocorrect="off"', false)
+            ->assertSee('Copy-paste is disabled for students. Please write your code manually.', false)
+            ->assertSee("'paste', 'copy', 'cut', 'drop', 'contextmenu'", false)
+            ->assertSee("event.ctrlKey || event.metaKey", false);
+    }
+
+    public function test_admin_problem_editor_keeps_clipboard_actions_enabled(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $problem = JudgeProblem::create([
+            'title' => 'Admin editor',
+            'description' => 'Test a solution.',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('judge.show', $problem->id));
+
+        $response->assertOk()
+            ->assertDontSee('Copy-paste is disabled for students. Please write your code manually.', false)
+            ->assertDontSee("'paste', 'copy', 'cut', 'drop', 'contextmenu'", false);
+    }
 }

@@ -42,6 +42,7 @@
     $isUpcoming = $problem->isUpcoming($serverNow);
     $isEnded = $problem->isEnded($serverNow);
     $hasSchedule = $problem->start_time !== null || $problem->end_time !== null;
+    $isAdmin = auth()->check() && auth()->user()->role === 'admin';
 @endphp
 <div style="display: flex; flex-direction: column; gap: var(--space-4);">
     <div>
@@ -115,7 +116,7 @@
             @endif
         </section>
 
-        <section class="card" aria-labelledby="submission-title">
+        <section class="card" id="submissionEditor" aria-labelledby="submission-title">
             <h2 id="submission-title" style="margin-top: 0;">Submit solution</h2>
             <form method="POST" action="{{ route('judge.submit') }}" style="display: flex; flex-direction: column; gap: var(--space-3);">
                 @csrf
@@ -128,7 +129,7 @@
                 </select>
 
                 <label for="code" class="form-label">Source code</label>
-                <textarea id="code" name="code" class="form-textarea" rows="20" required maxlength="64000" spellcheck="false" autocapitalize="off" autocomplete="off" style="font-family: Consolas, 'Courier New', monospace; resize: vertical;">{{ old('code') }}</textarea>
+                <textarea id="code" name="code" class="form-textarea" rows="20" required maxlength="64000" spellcheck="false" autocorrect="off" autocapitalize="off" autocomplete="off" style="font-family: Consolas, 'Courier New', monospace; resize: vertical;">{{ old('code') }}</textarea>
                 <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin: 0;">Maximum 64 KB. Code is sent only to a configured isolated Windows VM runner; it is never executed directly by the web server.</p>
 
                 <button class="btn btn-primary" type="submit" data-submit-button {{ $problem->testCases->isEmpty() || $isUpcoming || $isEnded ? 'disabled' : '' }}>
@@ -138,6 +139,52 @@
         </section>
     </div>
 </div>
+@if(!$isAdmin)
+<script>
+    (() => {
+        const editor = document.getElementById('submissionEditor');
+        const textarea = document.getElementById('code');
+        if (!editor || !textarea) return;
+
+        const warningMessage = 'Copy-paste is disabled for students. Please write your code manually.';
+
+        const showPasteWarning = () => {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Editor restricted', warningMessage, 'warning');
+                return;
+            }
+
+            const warning = document.createElement('div');
+            warning.setAttribute('role', 'alert');
+            warning.style.cssText = 'position:fixed;right:1rem;bottom:1rem;z-index:9999;padding:.75rem 1rem;border-radius:.5rem;background:#7f1d1d;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.25);';
+            warning.textContent = warningMessage;
+            document.body.appendChild(warning);
+            window.setTimeout(() => warning.remove(), 3500);
+        };
+
+        [textarea, editor].forEach((target) => {
+            ['paste', 'copy', 'cut', 'drop', 'contextmenu', 'dragover', 'dragstart'].forEach((eventName) => {
+                target.addEventListener(eventName, (event) => event.preventDefault());
+            });
+        });
+
+        textarea.addEventListener('paste', showPasteWarning);
+
+        editor.addEventListener('keydown', (event) => {
+            const modifier = event.ctrlKey || event.metaKey;
+            const key = event.key.toLowerCase();
+            const pasteShortcut = modifier && key === 'v';
+            const copyOrCutShortcut = modifier && (key === 'c' || key === 'x');
+            const shiftInsert = event.shiftKey && event.key === 'Insert';
+
+            if (pasteShortcut || copyOrCutShortcut || shiftInsert) {
+                event.preventDefault();
+                if (pasteShortcut || shiftInsert) showPasteWarning();
+            }
+        });
+    })();
+</script>
+@endif
 @if($hasSchedule)
 <script>
     (() => {
