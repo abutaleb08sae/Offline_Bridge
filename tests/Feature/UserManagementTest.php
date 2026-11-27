@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\ActivityLog;
-use App\Models\JudgeSubmission;
 use App\Models\JudgeProblem;
+use App\Models\JudgeSubmission;
+use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -16,7 +15,7 @@ class UserManagementTest extends TestCase
 
     public function test_user_model_has_fillable_and_datetime_casts(): void
     {
-        $user = new User();
+        $user = new User;
         $fillable = $user->getFillable();
 
         $this->assertContains('name', $fillable);
@@ -24,6 +23,7 @@ class UserManagementTest extends TestCase
         $this->assertContains('role', $fillable);
         $this->assertContains('status', $fillable);
         $this->assertContains('last_login_at', $fillable);
+        $this->assertContains('allow_copy_paste', $fillable);
 
         $created = User::create([
             'name' => 'Test User',
@@ -34,8 +34,10 @@ class UserManagementTest extends TestCase
             'last_login_at' => now(),
         ]);
 
-        $this->assertInstanceOf(\Carbon\CarbonInterface::class, $created->last_login_at);
+        $this->assertInstanceOf(CarbonInterface::class, $created->last_login_at);
         $this->assertEquals('active', $created->status);
+        $this->assertFalse($created->fresh()->allow_copy_paste);
+        $this->assertContains('allow_copy_paste', array_keys($created->getCasts()));
     }
 
     public function test_login_updates_last_login_at_and_status(): void
@@ -101,8 +103,64 @@ class UserManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Target Student');
         $response->assertSee('target@example.com');
+        $response->assertSee('Restricted · Enable');
         $response->assertSee('ACTIVE');
         $response->assertSee('1 day ago');
+    }
+
+    public function test_admin_can_toggle_copy_paste_for_a_student(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'STUDENT']);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.users.toggle-copy-paste', $student))
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'allow_copy_paste' => true,
+                'message' => "Copy-paste is now Allowed for {$student->name}.",
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $student->id,
+            'allow_copy_paste' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.toggle-copy-paste', $student))
+            ->assertRedirect(route('users.index'))
+            ->assertSessionHas('success', "Copy-paste is now Restricted for {$student->name}.");
+
+        $this->assertDatabaseHas('users', [
+            'id' => $student->id,
+            'allow_copy_paste' => false,
+        ]);
+    }
+
+    public function test_non_admin_cannot_toggle_student_copy_paste(): void
+    {
+        $student = User::factory()->create(['role' => 'student']);
+        $anotherStudent = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($student)
+            ->post(route('admin.users.toggle-copy-paste', $anotherStudent))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $anotherStudent->id,
+            'allow_copy_paste' => false,
+        ]);
+    }
+
+    public function test_copy_paste_toggle_rejects_non_student_users(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $instructor = User::factory()->create(['role' => 'instructor']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.toggle-copy-paste', $instructor))
+            ->assertNotFound();
     }
 
     public function test_admin_can_create_new_user(): void

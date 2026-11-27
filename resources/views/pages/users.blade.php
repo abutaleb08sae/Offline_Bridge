@@ -102,6 +102,7 @@
                         <th>User Name</th>
                         <th>Email Address</th>
                         <th>Role</th>
+                        <th>Copy-Paste</th>
                         <th>Status</th>
                         <th>Last Login</th>
                         <th style="text-align: right; width: 170px;">Actions</th>
@@ -131,6 +132,22 @@
                                     <span class="badge badge-neutral">STUDENT</span>
                                 @else
                                     <span class="badge badge-neutral">{{ $roleDisplay }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($roleName === 'student')
+                                    <form action="{{ route('admin.users.toggle-copy-paste', $user->id) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        <button type="submit"
+                                            class="badge {{ $user->allow_copy_paste ? 'badge-success' : 'badge-neutral' }}"
+                                            style="border: 0; cursor: pointer;"
+                                            aria-label="{{ $user->allow_copy_paste ? 'Disable' : 'Enable' }} copy-paste for {{ $user->name }}"
+                                            title="Click to {{ $user->allow_copy_paste ? 'restrict' : 'allow' }} copy-paste">
+                                            {{ $user->allow_copy_paste ? 'Allowed · Disable' : 'Restricted · Enable' }}
+                                        </button>
+                                    </form>
+                                @else
+                                    <span style="color: var(--text-muted);">—</span>
                                 @endif
                             </td>
                             <td>
@@ -182,7 +199,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
+                            <td colspan="7" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
                                 No users found in database. Click "Add New User" to register users.
                             </td>
                         </tr>

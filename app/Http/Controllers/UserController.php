@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Submission;
-use App\Models\JudgeSubmission;
 use App\Models\ActivityLog;
+use App\Models\JudgeSubmission;
+use App\Models\Submission;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +46,7 @@ class UserController extends Controller
 
         ActivityLogger::log(
             'User Created',
-            "Admin created user '{$user->name}' ({$user->email}) with role " . strtoupper($user->role),
+            "Admin created user '{$user->name}' ({$user->email}) with role ".strtoupper($user->role),
             'success',
             $request
         );
@@ -76,7 +76,7 @@ class UserController extends Controller
             'status' => $validated['status'],
         ];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $updateData['password'] = $validated['password'];
         }
 
@@ -90,6 +90,31 @@ class UserController extends Controller
         );
 
         return redirect()->route('users.index')->with('success', "User '{$user->name}' updated successfully.");
+    }
+
+    /**
+     * Toggle whether a student may use clipboard actions in the code editor.
+     */
+    public function toggleCopyPaste(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        abort_unless(strtolower($user->role ?? '') === 'student', 404);
+
+        $user->allow_copy_paste = ! $user->allow_copy_paste;
+        $user->save();
+
+        $status = $user->allow_copy_paste ? 'Allowed' : 'Restricted';
+        $message = "Copy-paste is now {$status} for {$user->name}.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'allow_copy_paste' => $user->allow_copy_paste,
+                'message' => $message,
+            ]);
+        }
+
+        return redirect()->route('users.index')->with('success', $message);
     }
 
     /**
@@ -134,8 +159,7 @@ class UserController extends Controller
 
             return redirect()->route('users.index')->with('success', "User '{$name}' deleted successfully.");
         } catch (\Throwable $e) {
-            return redirect()->route('users.index')->with('error', 'Failed to delete user: ' . $e->getMessage());
+            return redirect()->route('users.index')->with('error', 'Failed to delete user: '.$e->getMessage());
         }
     }
 }
-

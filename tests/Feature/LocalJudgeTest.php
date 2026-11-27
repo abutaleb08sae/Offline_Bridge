@@ -547,7 +547,7 @@ line two</pre>',
             ->assertSee('autocorrect="off"', false)
             ->assertSee('Copy-paste is disabled for students. Please write your code manually.', false)
             ->assertSee("'paste', 'copy', 'cut', 'drop', 'contextmenu'", false)
-            ->assertSee("event.ctrlKey || event.metaKey", false);
+            ->assertSee('event.ctrlKey || event.metaKey', false);
     }
 
     public function test_admin_problem_editor_keeps_clipboard_actions_enabled(): void
@@ -559,6 +559,24 @@ line two</pre>',
         ]);
 
         $response = $this->actingAs($admin)->get(route('judge.show', $problem->id));
+
+        $response->assertOk()
+            ->assertDontSee('Copy-paste is disabled for students. Please write your code manually.', false)
+            ->assertDontSee("'paste', 'copy', 'cut', 'drop', 'contextmenu'", false);
+    }
+
+    public function test_student_with_copy_paste_permission_can_use_editor_clipboard(): void
+    {
+        $student = User::factory()->create([
+            'role' => 'student',
+            'allow_copy_paste' => true,
+        ]);
+        $problem = JudgeProblem::create([
+            'title' => 'Permitted editor',
+            'description' => 'Test a solution.',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('judge.show', $problem->id));
 
         $response->assertOk()
             ->assertDontSee('Copy-paste is disabled for students. Please write your code manually.', false)

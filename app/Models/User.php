@@ -25,6 +25,7 @@ class User extends Authenticatable
         'role',
         'status',
         'last_login_at',
+        'allow_copy_paste',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_login_at' => 'datetime',
+            'allow_copy_paste' => 'boolean',
         ];
     }
 

@@ -4,8 +4,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\JudgeProblemMediaController;
 use App\Http\Controllers\LabTaskController;
-use App\Http\Controllers\LocalJudgeController;
 use App\Http\Controllers\LocalFileProblemImportController;
+use App\Http\Controllers\LocalJudgeController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
@@ -37,6 +37,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::match(['put', 'patch'], '/users/{id}', [UserController::class, 'update'])->whereNumber('id')->name('users.update');
+    Route::post('/users/{id}/toggle-copy-paste', [UserController::class, 'toggleCopyPaste'])
+        ->whereNumber('id')
+        ->name('admin.users.toggle-copy-paste');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->whereNumber('id')->name('users.destroy');
     Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
     Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');

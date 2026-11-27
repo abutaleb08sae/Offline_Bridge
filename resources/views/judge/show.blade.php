@@ -42,7 +42,7 @@
     $isUpcoming = $problem->isUpcoming($serverNow);
     $isEnded = $problem->isEnded($serverNow);
     $hasSchedule = $problem->start_time !== null || $problem->end_time !== null;
-    $isAdmin = auth()->check() && auth()->user()->role === 'admin';
+    $canCopyPaste = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->allow_copy_paste);
 @endphp
 <div style="display: flex; flex-direction: column; gap: var(--space-4);">
     <div>
@@ -139,7 +139,7 @@
         </section>
     </div>
 </div>
-@if(!$isAdmin)
+@if(!$canCopyPaste)
 <script>
     (() => {
         const editor = document.getElementById('submissionEditor');
@@ -147,8 +147,13 @@
         if (!editor || !textarea) return;
 
         const warningMessage = 'Copy-paste is disabled for students. Please write your code manually.';
+        let lastWarningAt = 0;
 
         const showPasteWarning = () => {
+            const now = Date.now();
+            if (now - lastWarningAt < 1000) return;
+            lastWarningAt = now;
+
             if (typeof window.showToast === 'function') {
                 window.showToast('Editor restricted', warningMessage, 'warning');
                 return;
@@ -162,24 +167,22 @@
             window.setTimeout(() => warning.remove(), 3500);
         };
 
-        [textarea, editor].forEach((target) => {
-            ['paste', 'copy', 'cut', 'drop', 'contextmenu', 'dragover', 'dragstart'].forEach((eventName) => {
-                target.addEventListener(eventName, (event) => event.preventDefault());
+        ['paste', 'copy', 'cut', 'drop', 'contextmenu', 'dragover', 'dragstart'].forEach((eventName) => {
+            textarea.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                showPasteWarning();
             });
         });
 
-        textarea.addEventListener('paste', showPasteWarning);
-
-        editor.addEventListener('keydown', (event) => {
+        textarea.addEventListener('keydown', (event) => {
             const modifier = event.ctrlKey || event.metaKey;
             const key = event.key.toLowerCase();
-            const pasteShortcut = modifier && key === 'v';
-            const copyOrCutShortcut = modifier && (key === 'c' || key === 'x');
-            const shiftInsert = event.shiftKey && event.key === 'Insert';
+            const clipboardShortcut = modifier && ['c', 'v', 'x', 'insert'].includes(key);
+            const insertShortcut = key === 'insert' && (modifier || event.shiftKey);
 
-            if (pasteShortcut || copyOrCutShortcut || shiftInsert) {
+            if (clipboardShortcut || insertShortcut) {
                 event.preventDefault();
-                if (pasteShortcut || shiftInsert) showPasteWarning();
+                showPasteWarning();
             }
         });
     })();
