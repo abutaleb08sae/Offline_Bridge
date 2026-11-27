@@ -22,7 +22,12 @@ class AdminCopyPasteControlController extends Controller
                 $query->whereNull('role')
                     ->orWhereRaw('LOWER(role) <> ?', ['admin']);
             })
-            ->with('copyPastePermissions')
+            ->with([
+                'copyPastePermissions',
+                'problemBlocks' => fn ($query) => $query
+                    ->where('is_blocked', true)
+                    ->with('problem:id,title'),
+            ])
             ->orderBy('name')
             ->orderBy('id')
             ->get();

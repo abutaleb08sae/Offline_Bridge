@@ -21,6 +21,7 @@ class AdminCopyPasteControlTest extends TestCase
         ]);
         $student = User::factory()->create([
             'name' => 'Control Center Student',
+            'allow_copy_paste' => true,
         ]);
         $instructor = User::factory()->create([
             'name' => 'Control Center Instructor',
@@ -45,17 +46,23 @@ class AdminCopyPasteControlTest extends TestCase
             ->assertSee('Control Center Student')
             ->assertSee((string) $student->id)
             ->assertSee('Control Center Instructor')
-            ->assertSee('INSTRUCTOR')
             ->assertViewHas('students', fn ($students) => $students->pluck('id')->all() === [
                 $instructor->id,
                 $student->id,
             ])
             ->assertSee('Permission Matrix Problem')
+            ->assertSee('Search student by name or email...')
             ->assertSee('Cut')
             ->assertSee('Blocked')
+            ->assertSee('1 Blocked')
+            ->assertSee('BLOCKED')
             ->assertSee('Student Copy-Paste Permissions Matrix')
-            ->assertSee('Global Permission')
-            ->assertSee('Problem-Specific Permissions')
+            ->assertSee('Global Copy-Paste')
+            ->assertSee('Manage Problems')
+            ->assertSee('Filter problems')
+            ->assertSee('Global Copy-Paste is currently ON (all problems allowed). Turn Global OFF to restrict specific problems.')
+            ->assertSee('data-details-row hidden', false)
+            ->assertSee('Unblock</button>', false)
             ->assertSee('Unblock &amp; Allow Copy-Paste', false);
 
         $this->actingAs($student)
