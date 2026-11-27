@@ -111,6 +111,7 @@
                         <tr>
                             <td style="font-weight: 600;">
                                 {{ $student->name }}
+                                <span class="badge badge-neutral">{{ strtoupper($student->role ?? 'USER') }}</span>
                                 <span style="display: block; color: var(--text-muted);">ID {{ $student->id }} · {{ $student->email }}</span>
                             </td>
                             <td>
@@ -154,7 +155,7 @@
                     @empty
                         <tr>
                             <td colspan="3" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
-                                No student accounts found.
+                                No non-admin student accounts found.
                             </td>
                         </tr>
                     @endforelse

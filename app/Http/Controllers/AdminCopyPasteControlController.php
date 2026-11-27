@@ -18,9 +18,13 @@ class AdminCopyPasteControlController extends Controller
     public function index(): View
     {
         $students = User::query()
-            ->whereRaw('LOWER(role) = ?', ['student'])
+            ->where(function ($query) {
+                $query->whereNull('role')
+                    ->orWhereRaw('LOWER(role) <> ?', ['admin']);
+            })
             ->with('copyPastePermissions')
             ->orderBy('name')
+            ->orderBy('id')
             ->get();
         $problems = JudgeProblem::query()->orderBy('title')->get(['id', 'title']);
         $violations = ProblemBlock::with(['user:id,name', 'problem:id,title'])
@@ -37,7 +41,7 @@ class AdminCopyPasteControlController extends Controller
 
     public function toggleProblemPermission(Request $request, User $user, JudgeProblem $problem): JsonResponse|RedirectResponse
     {
-        abort_unless(strtolower($user->role ?? '') === 'student', 404);
+        abort_if(strtolower($user->role ?? '') === 'admin', 404);
 
         $permission = CopyPastePermission::firstOrNew([
             'user_id' => $user->id,

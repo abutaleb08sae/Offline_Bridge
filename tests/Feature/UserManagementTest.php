@@ -112,7 +112,7 @@ class UserManagementTest extends TestCase
     public function test_admin_can_toggle_copy_paste_for_a_student(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $student = User::factory()->create(['role' => 'STUDENT']);
+        $student = User::factory()->create(['role' => 'user']);
 
         $this->actingAs($admin)
             ->postJson(route('admin.users.toggle-copy-paste', $student))
@@ -155,13 +155,13 @@ class UserManagementTest extends TestCase
         ]);
     }
 
-    public function test_copy_paste_toggle_rejects_non_student_users(): void
+    public function test_copy_paste_toggle_rejects_admin_users(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $instructor = User::factory()->create(['role' => 'instructor']);
+        $anotherAdmin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)
-            ->post(route('admin.users.toggle-copy-paste', $instructor))
+            ->post(route('admin.users.toggle-copy-paste', $anotherAdmin))
             ->assertNotFound();
     }
 

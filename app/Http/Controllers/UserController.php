@@ -93,12 +93,12 @@ class UserController extends Controller
     }
 
     /**
-     * Toggle whether a student may use clipboard actions in the code editor.
+     * Toggle whether a non-admin user may use clipboard actions in the code editor.
      */
     public function toggleCopyPaste(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        abort_unless(strtolower($user->role ?? '') === 'student', 404);
+        abort_if(strtolower($user->role ?? '') === 'admin', 404);
 
         $user->allow_copy_paste = ! $user->allow_copy_paste;
         $user->save();

@@ -135,7 +135,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($roleName === 'student')
+                                @if($roleName !== 'admin')
                                     <form action="{{ route('admin.users.toggle-copy-paste', $user->id) }}" method="POST" style="display: inline;">
                                         @csrf
                                         <button type="submit"

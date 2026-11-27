@@ -15,10 +15,16 @@ class AdminCopyPasteControlTest extends TestCase
 
     public function test_admin_control_center_lists_student_permissions_and_violation_status(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create([
+            'name' => 'Hidden Admin Account',
+            'role' => 'admin',
+        ]);
         $student = User::factory()->create([
             'name' => 'Control Center Student',
-            'role' => 'student',
+        ]);
+        $instructor = User::factory()->create([
+            'name' => 'Control Center Instructor',
+            'role' => 'instructor',
         ]);
         $problem = JudgeProblem::create([
             'title' => 'Permission Matrix Problem',
@@ -38,6 +44,12 @@ class AdminCopyPasteControlTest extends TestCase
             ->assertSee('1 active block')
             ->assertSee('Control Center Student')
             ->assertSee((string) $student->id)
+            ->assertSee('Control Center Instructor')
+            ->assertSee('INSTRUCTOR')
+            ->assertViewHas('students', fn ($students) => $students->pluck('id')->all() === [
+                $instructor->id,
+                $student->id,
+            ])
             ->assertSee('Permission Matrix Problem')
             ->assertSee('Cut')
             ->assertSee('Blocked')
@@ -54,7 +66,7 @@ class AdminCopyPasteControlTest extends TestCase
     public function test_admin_can_toggle_problem_specific_permission_for_one_student(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $student = User::factory()->create(['role' => 'student']);
+        $student = User::factory()->create(['role' => 'user']);
         $problem = JudgeProblem::create([
             'title' => 'Allowed Exception',
             'description' => 'This student can use clipboard actions here.',

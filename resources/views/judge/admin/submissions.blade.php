@@ -57,7 +57,7 @@
                         <td>#{{ $submission->id }}</td>
                         <td>{{ $submission->user?->name ?? 'Guest' }}{{ $submission->user_id ? ' (ID ' . $submission->user_id . ')' : '' }}</td>
                         <td>
-                            @if($submission->user && strtolower($submission->user->role ?? '') === 'student')
+                            @if($submission->user && strtolower($submission->user->role ?? '') !== 'admin')
                                 <form action="{{ route('admin.users.toggle-copy-paste', $submission->user_id) }}" method="POST" style="display: inline;">
                                     @csrf
                                     <button type="submit"
