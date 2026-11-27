@@ -103,7 +103,8 @@ class UserManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Target Student');
         $response->assertSee('target@example.com');
-        $response->assertSee('Restricted · Enable');
+        $response->assertSee('COPY-PASTE PERMISSION');
+        $response->assertSee('OFF');
         $response->assertSee('ACTIVE');
         $response->assertSee('1 day ago');
     }
@@ -128,6 +129,7 @@ class UserManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin)
+            ->from(route('users.index'))
             ->post(route('admin.users.toggle-copy-paste', $student))
             ->assertRedirect(route('users.index'))
             ->assertSessionHas('success', "Copy-paste is now Restricted for {$student->name}.");

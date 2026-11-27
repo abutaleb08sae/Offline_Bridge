@@ -102,7 +102,7 @@
                         <th>User Name</th>
                         <th>Email Address</th>
                         <th>Role</th>
-                        <th>Copy-Paste</th>
+                        <th>COPY-PASTE PERMISSION</th>
                         <th>Status</th>
                         <th>Last Login</th>
                         <th style="text-align: right; width: 170px;">Actions</th>
@@ -140,10 +140,11 @@
                                         @csrf
                                         <button type="submit"
                                             class="badge {{ $user->allow_copy_paste ? 'badge-success' : 'badge-neutral' }}"
-                                            style="border: 0; cursor: pointer;"
+                                            style="border: 0; cursor: pointer; font-family: inherit; {{ $user->allow_copy_paste ? '' : 'background-color: var(--color-danger-bg); color: var(--color-danger-text);' }}"
                                             aria-label="{{ $user->allow_copy_paste ? 'Disable' : 'Enable' }} copy-paste for {{ $user->name }}"
-                                            title="Click to {{ $user->allow_copy_paste ? 'restrict' : 'allow' }} copy-paste">
-                                            {{ $user->allow_copy_paste ? 'Allowed · Disable' : 'Restricted · Enable' }}
+                                            aria-pressed="{{ $user->allow_copy_paste ? 'true' : 'false' }}"
+                                            title="Click to {{ $user->allow_copy_paste ? 'disable' : 'enable' }} copy-paste">
+                                            {{ $user->allow_copy_paste ? 'ON' : 'OFF' }}
                                         </button>
                                     </form>
                                 @else

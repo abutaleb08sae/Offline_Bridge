@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\JudgeProblem;
+use App\Models\User;
 use App\Services\ProblemStatementSanitizer;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -119,9 +121,14 @@ class JudgeProblemMediaController extends Controller
         return back()->with('success', 'UVa-style problem PDF generated successfully.');
     }
 
-    public function showPdf(int $problemId): BinaryFileResponse
+    public function showPdf(int $problemId): BinaryFileResponse|Response
     {
         $problem = JudgeProblem::findOrFail($problemId);
+        $user = auth()->user();
+        if ($user instanceof User && ! $user->isAdmin() && $problem->isBlockedFor($user)) {
+            return response()->view('judge.blocked', ['problem' => $problem], 403);
+        }
+
         abort_unless($this->isStoredPath($problem->pdf_path, 'problem-pdfs/'), 404);
         abort_unless(Storage::disk('public')->exists($problem->pdf_path), 404);
 

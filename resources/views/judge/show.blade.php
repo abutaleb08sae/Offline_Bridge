@@ -42,7 +42,7 @@
     $isUpcoming = $problem->isUpcoming($serverNow);
     $isEnded = $problem->isEnded($serverNow);
     $hasSchedule = $problem->start_time !== null || $problem->end_time !== null;
-    $canCopyPaste = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->allow_copy_paste);
+    $canCopyPaste = auth()->check() && $problem->isCopyPasteAllowedFor(auth()->user());
 @endphp
 <div style="display: flex; flex-direction: column; gap: var(--space-4);">
     <div>
@@ -97,7 +97,7 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: var(--space-4); align-items: start;">
         <section class="card" @if($hasPdf) aria-label="UVa problem PDF" @else aria-labelledby="problem-title" @endif>
             @if($hasPdf)
-                <iframe src="{{ asset('storage/'.$problem->pdf_path) }}#toolbar=1&amp;view=FitH" title="UVa problem PDF" class="w-100" style="width: 100%; height: 82vh; border: none; border-radius: 8px;"></iframe>
+                <iframe src="{{ route('judge.problem.pdf', $problem->id) }}#toolbar=1&amp;view=FitH" title="UVa problem PDF" class="w-100" style="width: 100%; height: 82vh; border: none; border-radius: 8px;"></iframe>
             @else
                 <div style="display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4);">
                     <h2 id="problem-title" style="margin: 0; color: var(--text-main);">{{ $problem->title }}</h2>
@@ -148,6 +148,10 @@
 
         const warningMessage = 'Copy-paste is disabled for students. Please write your code manually.';
         let lastWarningAt = 0;
+        let violationRequestStarted = false;
+        let lastViolationType = null;
+        let lockMessage;
+        let retryButton;
 
         const showPasteWarning = () => {
             const now = Date.now();
@@ -167,22 +171,105 @@
             window.setTimeout(() => warning.remove(), 3500);
         };
 
+        const lockEditor = () => {
+            textarea.readOnly = true;
+            const submitButton = editor.querySelector('[data-submit-button]');
+            if (submitButton) submitButton.disabled = true;
+            document.querySelector('.app-container')?.setAttribute('inert', '');
+
+            const overlay = document.createElement('div');
+            overlay.setAttribute('role', 'alertdialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:rgba(15,23,42,.96);color:#fff;text-align:center;';
+
+            const panel = document.createElement('div');
+            panel.style.cssText = 'max-width:36rem;padding:2rem;border:1px solid rgba(255,255,255,.2);border-radius:.75rem;background:#1e293b;';
+            const heading = document.createElement('h1');
+            heading.textContent = 'Access Blocked due to Copy-Paste Policy Violation';
+            const message = document.createElement('p');
+            message.textContent = 'Recording this policy violation. Access to this problem is being blocked.';
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'btn btn-secondary';
+            retry.textContent = 'Retry recording violation';
+            retry.hidden = true;
+            retry.addEventListener('click', () => {
+                violationRequestStarted = false;
+                reportViolation(lastViolationType);
+            });
+
+            panel.append(heading, message, retry);
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+            lockMessage = message;
+            retryButton = retry;
+        };
+
+        const reportViolation = async (violationType) => {
+            if (violationRequestStarted) return;
+            violationRequestStarted = true;
+            lastViolationType = violationType;
+            showPasteWarning();
+            if (!lockMessage) lockEditor();
+
+            try {
+                const csrfToken = textarea.form.querySelector('input[name="_token"]')?.value;
+                if (!csrfToken) throw new Error('Missing request security token.');
+
+                const response = await fetch(@json(route('judge.problems.violation')), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        problem_id: {{ $problem->id }},
+                        violation_type: violationType
+                    })
+                });
+                const result = await response.json();
+                if (!response.ok || result.blocked !== true) {
+                    throw new Error('The server did not confirm the block.');
+                }
+
+                window.location.replace(@json(route('judge.show', $problem->id)));
+            } catch (error) {
+                lockMessage.textContent = 'Unable to record the violation. This editor remains locked; retry the request to complete the block.';
+                retryButton.hidden = false;
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Violation not recorded', 'The editor remains locked. Retry to record the block.', 'danger');
+                }
+            }
+        };
+
         ['paste', 'copy', 'cut', 'drop', 'contextmenu', 'dragover', 'dragstart'].forEach((eventName) => {
             textarea.addEventListener(eventName, (event) => {
                 event.preventDefault();
-                showPasteWarning();
+                if (['paste', 'copy', 'cut'].includes(eventName)) {
+                    reportViolation(eventName);
+                } else {
+                    showPasteWarning();
+                }
             });
         });
 
         textarea.addEventListener('keydown', (event) => {
             const modifier = event.ctrlKey || event.metaKey;
             const key = event.key.toLowerCase();
-            const clipboardShortcut = modifier && ['c', 'v', 'x', 'insert'].includes(key);
-            const insertShortcut = key === 'insert' && (modifier || event.shiftKey);
+            let violationType = null;
 
-            if (clipboardShortcut || insertShortcut) {
+            if (modifier && key === 'c') violationType = 'copy';
+            if (modifier && key === 'v') violationType = 'paste';
+            if (modifier && key === 'x') violationType = 'cut';
+            if (key === 'insert' && (modifier || event.shiftKey)) {
+                violationType = event.shiftKey ? 'paste' : 'copy';
+            }
+
+            if (violationType) {
                 event.preventDefault();
-                showPasteWarning();
+                reportViolation(violationType);
             }
         });
     })();

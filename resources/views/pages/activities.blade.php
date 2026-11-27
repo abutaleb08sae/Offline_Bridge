@@ -5,6 +5,12 @@
 @section('content')
 <div style="display: flex; flex-direction: column; gap: var(--space-6);">
 
+    @if(session('success'))
+        <div class="card" role="status" style="border-color: var(--color-success-text); color: var(--color-success-text);">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
             <div>
@@ -97,6 +103,69 @@
                     No activity logs recorded yet.
                 </div>
             @endforelse
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Copy-Paste Violation Security Log</h3>
+                <p class="card-subtitle">Restricted clipboard attempts and problem access blocks</p>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Problem</th>
+                        <th>Action Attempted</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                        <th>Block Status</th>
+                        <th>Admin Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($copyPasteViolations as $violation)
+                        <tr>
+                            <td>
+                                {{ $violation->user?->name ?? 'Deleted user' }}
+                                <span style="display: block; color: var(--text-muted);">ID: {{ $violation->user_id }}</span>
+                            </td>
+                            <td>
+                                {{ $violation->problem?->title ?? 'Deleted problem' }}
+                                <span style="display: block; color: var(--text-muted);">ID: {{ $violation->problem_id }}</span>
+                            </td>
+                            <td>{{ ucfirst($violation->violation_type) }}</td>
+                            <td>{{ $violation->ip_address ?? 'Unknown' }}</td>
+                            <td>{{ $violation->created_at->format('Y-m-d H:i:s') }}</td>
+                            <td>
+                                @if($violation->is_blocked)
+                                    <span class="badge badge-danger">Blocked</span>
+                                @else
+                                    <span class="badge badge-neutral">Unblocked</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($violation->is_blocked)
+                                    <form action="{{ route('admin.problem-blocks.unblock', $violation) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-secondary">Unblock Problem</button>
+                                    </form>
+                                @else
+                                    <span style="color: var(--text-muted);">Access restored</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">No copy-paste violations recorded.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 

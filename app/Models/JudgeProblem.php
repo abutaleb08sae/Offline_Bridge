@@ -38,6 +38,39 @@ class JudgeProblem extends Model
         return $this->hasMany(JudgeSubmission::class);
     }
 
+    public function problemBlocks(): HasMany
+    {
+        return $this->hasMany(ProblemBlock::class, 'problem_id');
+    }
+
+    public function copyPastePermissions(): HasMany
+    {
+        return $this->hasMany(CopyPastePermission::class, 'problem_id');
+    }
+
+    public function isBlockedFor(User $user): bool
+    {
+        return $this->problemBlocks()
+            ->where('user_id', $user->id)
+            ->where('is_blocked', true)
+            ->exists();
+    }
+
+    public function hasProblemSpecificCopyPastePermission(User $user): bool
+    {
+        return $this->copyPastePermissions()
+            ->where('user_id', $user->id)
+            ->where('is_allowed', true)
+            ->exists();
+    }
+
+    public function isCopyPasteAllowedFor(User $user): bool
+    {
+        return $user->isAdmin()
+            || $user->allow_copy_paste
+            || $this->hasProblemSpecificCopyPastePermission($user);
+    }
+
     public function isUpcoming(?Carbon $now = null): bool
     {
         return $this->start_time !== null && ($now ?? now())->lt($this->start_time);

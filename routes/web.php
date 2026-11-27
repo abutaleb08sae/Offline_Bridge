@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\AdminCopyPasteControlController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\JudgeProblemMediaController;
+use App\Http\Controllers\JudgeProblemViolationController;
 use App\Http\Controllers\LabTaskController;
 use App\Http\Controllers\LocalFileProblemImportController;
 use App\Http\Controllers\LocalJudgeController;
@@ -32,6 +34,19 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/copy-paste-control', [AdminCopyPasteControlController::class, 'index'])
+        ->name('admin.copy-paste-control');
+    Route::post('/admin/copy-paste-control/users/{user}/problems/{problem}/toggle', [AdminCopyPasteControlController::class, 'toggleProblemPermission'])
+        ->whereNumber('user')
+        ->whereNumber('problem')
+        ->name('admin.copy-paste-control.permissions.toggle');
+    Route::match(['post', 'patch'], '/admin/copy-paste-control/problem-blocks/{problemBlock}/unblock', [AdminCopyPasteControlController::class, 'unblock'])
+        ->whereNumber('problemBlock')
+        ->name('admin.copy-paste-control.unblock');
+    Route::match(['post', 'patch'], '/admin/copy-paste-control/problem-blocks/{problemBlock}/unblock-and-allow', [AdminCopyPasteControlController::class, 'unblockAndAllow'])
+        ->whereNumber('problemBlock')
+        ->name('admin.copy-paste-control.unblock-and-allow');
+
     Route::get('/applications', [NavigationController::class, 'applications'])->name('applications.index');
     Route::post('/applications', [NavigationController::class, 'storeApplication'])->name('applications.store');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -41,6 +56,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->whereNumber('id')
         ->name('admin.users.toggle-copy-paste');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->whereNumber('id')->name('users.destroy');
+    Route::match(['post', 'patch'], '/problem-blocks/{problemBlock}/unblock', [JudgeProblemViolationController::class, 'unblock'])
+        ->whereNumber('problemBlock')
+        ->name('admin.problem-blocks.unblock');
     Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
     Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
     Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
@@ -60,6 +78,9 @@ Route::prefix('judge')->name('judge.')->group(function () {
         ->whereNumber('problemId')
         ->name('problem.pdf');
     Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
+    Route::post('/problems/violation', [JudgeProblemViolationController::class, 'store'])
+        ->middleware('auth')
+        ->name('problems.violation');
 
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/problems/create', [LocalJudgeController::class, 'createProblem'])->name('admin.problems.create');

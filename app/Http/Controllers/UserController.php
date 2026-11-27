@@ -106,7 +106,7 @@ class UserController extends Controller
         $status = $user->allow_copy_paste ? 'Allowed' : 'Restricted';
         $message = "Copy-paste is now {$status} for {$user->name}.";
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'allow_copy_paste' => $user->allow_copy_paste,
@@ -114,7 +114,7 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('users.index')->with('success', $message);
+        return redirect()->back()->with('success', $message);
     }
 
     /**

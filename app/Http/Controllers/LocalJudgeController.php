@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\JudgeProblem;
 use App\Models\JudgeSubmission;
+use App\Models\ProblemBlock;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
 use App\Services\ProblemStatementSanitizer;
 use App\Services\ProblemUrlImporter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,15 +31,21 @@ class LocalJudgeController extends Controller
 
         return view('judge.index', [
             'problems' => $problems,
+            'activeBlockCount' => ProblemBlock::activePairCount(),
             'runnerConfigured' => is_string(config('judge.vm_runner'))
                 && config('judge.vm_runner') !== ''
                 && is_file(config('judge.vm_runner')),
         ]);
     }
 
-    public function show(int $id, ProblemStatementSanitizer $sanitizer): View
+    public function show(int $id, ProblemStatementSanitizer $sanitizer): Response|View
     {
-        $problem = JudgeProblem::with('testCases')->findOrFail($id);
+        $problem = JudgeProblem::findOrFail($id);
+        if ($this->isBlockedForCurrentUser($problem)) {
+            return response()->view('judge.blocked', ['problem' => $problem], 403);
+        }
+
+        $problem->load('testCases');
         $hasPdf = is_string($problem->pdf_path)
             && str_starts_with($problem->pdf_path, 'problem-pdfs/')
             && ! str_contains($problem->pdf_path, '..')
@@ -261,11 +270,31 @@ class LocalJudgeController extends Controller
 
     public function allSubmissions(): View
     {
-        $submissions = JudgeSubmission::with(['user:id,name', 'problem:id,title'])
+        $submissions = JudgeSubmission::with(['user:id,name,role,allow_copy_paste', 'problem:id,title'])
             ->latest()
             ->paginate(25);
 
-        return view('judge.admin.submissions', compact('submissions'));
+        $rows = $submissions->getCollection();
+        $userIds = $rows->pluck('user_id')->filter()->unique()->values();
+        $problemIds = $rows->pluck('judge_problem_id')->unique()->values();
+        $activeBlockIds = ProblemBlock::query()
+            ->whereIn('user_id', $userIds)
+            ->whereIn('problem_id', $problemIds)
+            ->where('is_blocked', true)
+            ->orderByDesc('id')
+            ->get(['id', 'user_id', 'problem_id'])
+            ->unique(fn (ProblemBlock $block) => $block->user_id.':'.$block->problem_id)
+            ->mapWithKeys(fn (ProblemBlock $block) => [$block->user_id.':'.$block->problem_id => $block->id]);
+
+        $rows->each(function (JudgeSubmission $submission) use ($activeBlockIds): void {
+            $pairKey = $submission->user_id.':'.$submission->judge_problem_id;
+            $submission->setAttribute('active_problem_block_id', $activeBlockIds->get($pairKey));
+        });
+
+        return view('judge.admin.submissions', [
+            'submissions' => $submissions,
+            'activeBlockCount' => ProblemBlock::activePairCount(),
+        ]);
     }
 
     public function showSubmission(int $submission): View
@@ -275,10 +304,18 @@ class LocalJudgeController extends Controller
         return view('judge.admin.submission', compact('submission'));
     }
 
-    public function submit(Request $request, LocalJudgeRunner $runner): RedirectResponse
+    public function submit(Request $request, LocalJudgeRunner $runner): RedirectResponse|Response
     {
-        $validated = $request->validate([
+        $problemId = $request->validate([
             'judge_problem_id' => ['required', 'integer', 'exists:judge_problems,id'],
+        ])['judge_problem_id'];
+        $problem = JudgeProblem::findOrFail($problemId);
+
+        if ($this->isBlockedForCurrentUser($problem)) {
+            return response()->view('judge.blocked', ['problem' => $problem], 403);
+        }
+
+        $validated = $request->validate([
             'language' => ['required', 'in:cpp,python'],
             'code' => ['required', 'string', 'max:64000'],
         ]);
@@ -289,7 +326,7 @@ class LocalJudgeController extends Controller
             ]);
         }
 
-        $problem = JudgeProblem::with('testCases')->findOrFail($validated['judge_problem_id']);
+        $problem->load('testCases');
         if ($problem->isUpcoming()) {
             return back()->withInput()->withErrors([
                 'schedule' => 'This problem is not accepting submissions yet.',
@@ -353,5 +390,14 @@ class LocalJudgeController extends Controller
         }
 
         return $validated;
+    }
+
+    private function isBlockedForCurrentUser(JudgeProblem $problem): bool
+    {
+        $user = Auth::user();
+
+        return $user instanceof User
+            && ! $user->isAdmin()
+            && $problem->isBlockedFor($user);
     }
 }

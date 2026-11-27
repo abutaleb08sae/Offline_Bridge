@@ -14,6 +14,16 @@
                 <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
                     <a class="btn btn-secondary" href="{{ route('judge.admin.problems.create') }}#problemImport">Import via URL</a>
                     <a class="btn btn-primary" href="{{ route('judge.admin.problems.create') }}">Create Problem</a>
+                    <a class="btn btn-secondary" href="{{ route('admin.copy-paste-control') }}" style="display: inline-flex; align-items: center; gap: var(--space-2); border-radius: 999px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 5-3.4 8.3-8 10-4.6-1.7-8-5-8-10V6l8-3z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12l1.7 1.7 3.5-3.7" />
+                        </svg>
+                        <span>Copy-Paste &amp; Block Control</span>
+                        @if($activeBlockCount > 0)
+                            <span class="badge badge-danger" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;" aria-label="{{ $activeBlockCount }} active {{ \Illuminate\Support\Str::plural('block', $activeBlockCount) }}" title="{{ $activeBlockCount }} active {{ \Illuminate\Support\Str::plural('block', $activeBlockCount) }}">{{ $activeBlockCount }}</span>
+                        @endif
+                    </a>
                 </div>
             @endif
         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Application;
+use App\Models\ProblemBlock;
 use App\Services\ActivityLogger;
 use App\Services\SystemTelemetryService;
 use Illuminate\Http\Request;
@@ -139,9 +140,14 @@ class NavigationController extends Controller
     public function activities()
     {
         $activities = ActivityLog::recent(50)->get();
+        $copyPasteViolations = ProblemBlock::with(['user:id,name', 'problem:id,title'])
+            ->latest()
+            ->take(100)
+            ->get();
 
         return view('pages.activities', [
-            'activities' => $activities
+            'activities' => $activities,
+            'copyPasteViolations' => $copyPasteViolations,
         ]);
     }
 

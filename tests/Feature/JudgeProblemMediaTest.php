@@ -63,7 +63,7 @@ class JudgeProblemMediaTest extends TestCase
             ->assertDontSee('UVa PDF View')
             ->assertDontSee('HTML View')
             ->assertDontSee('data-problem-html')
-            ->assertSee(asset('storage/'.$problem->pdf_path), false);
+            ->assertSee(route('judge.problem.pdf', $problem->id), false);
 
         $pdfPath = $problem->pdf_path;
         $this->actingAs($admin)

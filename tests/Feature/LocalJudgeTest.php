@@ -547,7 +547,9 @@ line two</pre>',
             ->assertSee('autocorrect="off"', false)
             ->assertSee('Copy-paste is disabled for students. Please write your code manually.', false)
             ->assertSee("'paste', 'copy', 'cut', 'drop', 'contextmenu'", false)
-            ->assertSee('event.ctrlKey || event.metaKey', false);
+            ->assertSee('event.ctrlKey || event.metaKey', false)
+            ->assertSee(str_replace('/', '\\/', route('judge.problems.violation')), false)
+            ->assertSee('reportViolation(eventName)', false);
     }
 
     public function test_admin_problem_editor_keeps_clipboard_actions_enabled(): void
