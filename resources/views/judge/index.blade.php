@@ -10,7 +10,7 @@
                 <h2 class="card-title">Local Programming Judge</h2>
                 <p class="card-subtitle">Solve programming problems on the OfflineBridge LAN.</p>
             </div>
-            @if(auth()->check() && auth()->user()->role === 'admin')
+            @if(auth()->check() && auth()->user()->isAdmin())
                 <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
                     <a class="btn btn-secondary" href="{{ route('judge.admin.problems.create') }}#problemImport">Import via URL</a>
                     <a class="btn btn-primary" href="{{ route('judge.admin.problems.create') }}">Create Problem</a>
@@ -20,8 +20,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12l1.7 1.7 3.5-3.7" />
                         </svg>
                         <span>Copy-Paste &amp; Block Control</span>
-                        @if($activeBlockCount > 0)
-                            <span class="badge badge-danger" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;" aria-label="{{ $activeBlockCount }} active {{ \Illuminate\Support\Str::plural('block', $activeBlockCount) }}" title="{{ $activeBlockCount }} active {{ \Illuminate\Support\Str::plural('block', $activeBlockCount) }}">{{ $activeBlockCount }}</span>
+                        @php($totalBlocks = ($activeBlockCount ?? 0) + ($activeTabBlockCount ?? 0))
+                        @if($totalBlocks > 0)
+                            <span class="badge badge-danger" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;" aria-label="{{ $totalBlocks }} active {{ \Illuminate\Support\Str::plural('block', $totalBlocks) }}" title="{{ $totalBlocks }} active {{ \Illuminate\Support\Str::plural('block', $totalBlocks) }}">{{ $totalBlocks }}</span>
                         @endif
                     </a>
                 </div>
@@ -73,8 +74,8 @@
                                         {{ $problem->pdf_path ? 'PDF Ready' : 'No PDF' }}
                                     </span>
                                     @if($problem->pdf_path)
-                                        <a class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: var(--font-size-xs);" href="{{ route('judge.problem.pdf', $problem->id) }}" target="_blank" rel="noopener">PDF</a>
-                                        @if(auth()->check() && auth()->user()->role === 'admin')
+                                        <a class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: var(--font-size-xs);" href="{{ route('judge.problem.pdf', $problem->id) }}" target="_blank" rel="noopener" data-allow-new-tab="true">PDF</a>
+                                        @if(auth()->check() && auth()->user()->isAdmin())
                                             <form method="POST" action="{{ route('judge.admin.problems.media.pdf.remove', $problem->id) }}" style="display: inline;">
                                                 @csrf
                                                 @method('DELETE')
@@ -86,7 +87,7 @@
                                 <td style="text-align: right;">
                                     <div style="display: inline-flex; gap: var(--space-2); align-items: center;">
                                         <a class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);" href="{{ route('judge.show', $problem->id) }}">Solve Problem</a>
-                                        @if(auth()->check() && auth()->user()->role === 'admin')
+                                        @if(auth()->check() && auth()->user()->isAdmin())
                                             <a class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);" href="{{ route('judge.problems.edit', $problem->id) }}">Edit</a>
                                             <form method="POST"
                                                   action="{{ route('judge.admin.problems.destroy', $problem->id) }}"
