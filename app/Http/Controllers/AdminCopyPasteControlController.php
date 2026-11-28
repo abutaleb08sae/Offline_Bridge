@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CopyPastePermission;
 use App\Models\JudgeProblem;
 use App\Models\ProblemBlock;
+use App\Models\TabViolation;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
@@ -35,12 +36,18 @@ class AdminCopyPasteControlController extends Controller
         $violations = ProblemBlock::with(['user:id,name', 'problem:id,title'])
             ->latest()
             ->paginate(25);
+        $tabViolations = TabViolation::with(['user:id,name'])
+            ->latest()
+            ->take(50)
+            ->get();
 
         return view('admin.copy-paste-control', [
             'students' => $students,
             'problems' => $problems,
             'violations' => $violations,
             'activeBlockCount' => ProblemBlock::activePairCount(),
+            'tabViolations' => $tabViolations,
+            'activeTabBlockCount' => TabViolation::activeUserCount(),
         ]);
     }
 

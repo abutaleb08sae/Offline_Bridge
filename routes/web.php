@@ -10,6 +10,7 @@ use App\Http\Controllers\LocalFileProblemImportController;
 use App\Http\Controllers\LocalJudgeController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\TabViolationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UvaPdfContestImportController;
 use App\Models\ActivityLog;
@@ -23,11 +24,18 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [NavigationController::class, 'dashboard'])->name('dashboard');
-Route::get('/files', [LabTaskController::class, 'index'])->name('files.index');
+Route::get('/files', [LabTaskController::class, 'index'])
+    ->middleware('not.tab_blocked')
+    ->name('files.index');
+
+Route::post('/tab-violations', [TabViolationController::class, 'store'])
+    ->middleware('auth')
+    ->name('tab-violations.store');
+
+Route::get('/login', [LoginController::class, 'create'])->name('login');
+Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:10,1')->name('login.store');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [LoginController::class, 'create'])->name('login');
-    Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:5,1')->name('login.store');
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:5,1')->name('register.store');
 });
@@ -59,6 +67,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::match(['post', 'patch'], '/problem-blocks/{problemBlock}/unblock', [JudgeProblemViolationController::class, 'unblock'])
         ->whereNumber('problemBlock')
         ->name('admin.problem-blocks.unblock');
+    Route::match(['post', 'patch'], '/admin/tab-violations/{tabViolation}/unblock', [TabViolationController::class, 'unblock'])
+        ->whereNumber('tabViolation')
+        ->name('admin.tab-violations.unblock');
     Route::get('/clients', [NavigationController::class, 'clients'])->name('clients.index');
     Route::get('/activities', [NavigationController::class, 'activities'])->name('activities.index');
     Route::get('/logs', [NavigationController::class, 'logs'])->name('logs.index');
@@ -72,12 +83,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('judge')->name('judge.')->group(function () {
-    Route::get('/', [LocalJudgeController::class, 'index'])->name('index');
-    Route::get('/problem/{id}', [LocalJudgeController::class, 'show'])->whereNumber('id')->name('show');
-    Route::get('/problem/{problemId}/pdf', [JudgeProblemMediaController::class, 'showPdf'])
-        ->whereNumber('problemId')
-        ->name('problem.pdf');
-    Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
+    Route::middleware('not.tab_blocked')->group(function () {
+        Route::get('/', [LocalJudgeController::class, 'index'])->name('index');
+        Route::get('/problem/{id}', [LocalJudgeController::class, 'show'])->whereNumber('id')->name('show');
+        Route::get('/problem/{problemId}/pdf', [JudgeProblemMediaController::class, 'showPdf'])
+            ->whereNumber('problemId')
+            ->name('problem.pdf');
+        Route::post('/submit', [LocalJudgeController::class, 'submit'])->middleware('throttle:10,1')->name('submit');
+    });
     Route::post('/problems/violation', [JudgeProblemViolationController::class, 'store'])
         ->middleware('auth')
         ->name('problems.violation');
@@ -122,8 +135,10 @@ Route::prefix('judge')->name('judge.')->group(function () {
 | Lab Tasks & Local File Distribution Routes (.pkt Support)
 |--------------------------------------------------------------------------
 */
-Route::get('/labs', [LabTaskController::class, 'index'])->name('labs.index');
-Route::get('/labs/{id}/download', [LabTaskController::class, 'download'])->name('labs.download');
+Route::middleware('not.tab_blocked')->group(function () {
+    Route::get('/labs', [LabTaskController::class, 'index'])->name('labs.index');
+    Route::get('/labs/{id}/download', [LabTaskController::class, 'download'])->name('labs.download');
+});
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/labs/upload', [LabTaskController::class, 'store'])->name('labs.store');
     Route::delete('/labs/{id}', [LabTaskController::class, 'destroy'])->name('labs.destroy');
@@ -134,10 +149,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
 | Student Submissions & Instructor Evaluation Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/submit', [SubmissionController::class, 'create'])->name('submissions.create');
-Route::get('/labs/submit', [SubmissionController::class, 'create'])->name('labs.submit');
-Route::post('/submit', [LabTaskController::class, 'storeSubmission'])->name('submissions.store');
-Route::post('/submissions/submit', [LabTaskController::class, 'storeSubmission']);
+Route::middleware('not.tab_blocked')->group(function () {
+    Route::get('/submit', [SubmissionController::class, 'create'])->name('submissions.create');
+    Route::get('/labs/submit', [SubmissionController::class, 'create'])->name('labs.submit');
+    Route::post('/submit', [LabTaskController::class, 'storeSubmission'])->name('submissions.store');
+    Route::post('/submissions/submit', [LabTaskController::class, 'storeSubmission']);
+});
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::get('/admin/submissions/{id}/download', [SubmissionController::class, 'download'])->name('submissions.download');

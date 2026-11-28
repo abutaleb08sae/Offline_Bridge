@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JudgeProblem;
 use App\Models\JudgeSubmission;
 use App\Models\ProblemBlock;
+use App\Models\TabViolation;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\LocalJudgeRunner;
@@ -32,6 +33,7 @@ class LocalJudgeController extends Controller
         return view('judge.index', [
             'problems' => $problems,
             'activeBlockCount' => ProblemBlock::activePairCount(),
+            'activeTabBlockCount' => TabViolation::activeUserCount(),
             'runnerConfigured' => is_string(config('judge.vm_runner'))
                 && config('judge.vm_runner') !== ''
                 && is_file(config('judge.vm_runner')),

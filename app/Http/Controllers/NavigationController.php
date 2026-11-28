@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\ProblemBlock;
+use App\Models\TabViolation;
 use App\Services\ActivityLogger;
 use App\Services\SystemTelemetryService;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ class NavigationController extends Controller
     public function dashboard()
     {
         $user = auth()->user();
-        $isAdmin = $user && $user->role === 'admin';
+        $isAdmin = $user && $user->isAdmin();
 
         $activities = collect([]);
         try {
@@ -144,10 +145,15 @@ class NavigationController extends Controller
             ->latest()
             ->take(100)
             ->get();
+        $tabViolations = TabViolation::with(['user:id,name'])
+            ->latest()
+            ->take(100)
+            ->get();
 
         return view('pages.activities', [
             'activities' => $activities,
             'copyPasteViolations' => $copyPasteViolations,
+            'tabViolations' => $tabViolations,
         ]);
     }
 
