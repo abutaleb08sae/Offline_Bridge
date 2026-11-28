@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in - OfflineBridge</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ url('css/app.css') }}">
     <script>
         (function() {
             const savedTheme = localStorage.getItem('offlinebridge_theme') || 'light';
@@ -33,6 +33,21 @@
         </div>
 
         <p class="card-subtitle" style="margin-bottom: var(--space-5);">Authenticate with your credentials to access the air-gapped lab controller.</p>
+
+        @if(isset($activeUser) && $activeUser)
+            <div class="card" style="margin: 0 0 var(--space-4); border-color: rgba(13, 92, 94, 0.35); background: rgba(13, 92, 94, 0.08); padding: var(--space-3) var(--space-4);">
+                <div style="font-size: var(--font-size-xs); color: var(--text-main); line-height: 1.5; margin-bottom: var(--space-2);">
+                    <strong>Active Session:</strong> Signed in as <strong>{{ $activeUser->name }}</strong>
+                    (<span class="badge {{ $activeUser->isAdmin() ? 'badge-danger' : 'badge-neutral' }}">{{ strtoupper($activeUser->role ?? 'USER') }}</span>).
+                    Signing in below will switch this browser session to the new account.
+                    <br>
+                    <span style="color: var(--text-muted);">Tip: Keep Admin &amp; Student separate by opening Admin on <code>127.0.0.1</code> and Student on <code>localhost</code> (or Incognito).</span>
+                </div>
+                <a href="{{ route('dashboard') }}" class="btn btn-secondary" style="width: 100%; font-size: var(--font-size-xs);">
+                    Continue as {{ $activeUser->name }}
+                </a>
+            </div>
+        @endif
 
         @if($errors->any())
             <div class="card" role="alert" style="margin: 0 0 var(--space-4); border-color: rgba(239, 68, 68, 0.4); background: var(--color-danger-bg); color: var(--color-danger-text); padding: var(--space-3) var(--space-4);">
