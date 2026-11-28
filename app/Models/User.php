@@ -56,7 +56,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return strtolower(trim((string) $this->role)) === 'admin';
     }
 
     public function problemBlocks(): HasMany
@@ -67,5 +67,16 @@ class User extends Authenticatable
     public function copyPastePermissions(): HasMany
     {
         return $this->hasMany(CopyPastePermission::class);
+    }
+
+    public function tabViolations(): HasMany
+    {
+        return $this->hasMany(TabViolation::class);
+    }
+
+    public function isTabBlocked(): bool
+    {
+        return ! $this->isAdmin()
+            && $this->tabViolations()->where('is_blocked', true)->exists();
     }
 }
