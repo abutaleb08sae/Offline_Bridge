@@ -92,6 +92,77 @@
     <section class="card">
         <div class="card-header">
             <div>
+                <h2 class="card-title">Browser Tab Policy Violations</h2>
+                <p class="card-subtitle">Students blocked from Lab Tasks and Judge after opening unauthorized browser tabs or switching tabs.</p>
+            </div>
+            <span class="badge {{ ($activeTabBlockCount ?? 0) > 0 ? 'badge-danger' : 'badge-success' }}">
+                {{ $activeTabBlockCount ?? 0 }} blocked {{ \Illuminate\Support\Str::plural('student', $activeTabBlockCount ?? 0) }}
+            </span>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student Name &amp; ID</th>
+                        <th>Violation</th>
+                        <th>Page / Details</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($tabViolations ?? collect() as $tabViolation)
+                        <tr>
+                            <td>
+                                {{ $tabViolation->user?->name ?? 'Deleted user' }}
+                                <span style="display: block; color: var(--text-muted);">ID {{ $tabViolation->user_id }}</span>
+                            </td>
+                            <td>{{ ucwords(str_replace('_', ' ', $tabViolation->violation_type)) }}</td>
+                            <td>
+                                @if($tabViolation->page_url)
+                                    <code style="font-size: var(--font-size-xs);">{{ $tabViolation->page_url }}</code>
+                                @endif
+                                @if($tabViolation->details)
+                                    <span style="display: block; font-size: var(--font-size-xs); color: var(--text-muted);">{{ $tabViolation->details }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $tabViolation->created_at->format('Y-m-d H:i:s') }}</td>
+                            <td>
+                                @if($tabViolation->is_blocked)
+                                    <span class="badge badge-danger">Blocked</span>
+                                @else
+                                    <span class="badge badge-neutral">Unblocked</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($tabViolation->is_blocked)
+                                    <form action="{{ route('admin.tab-violations.unblock', $tabViolation) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: var(--font-size-xs); border-radius: 999px;">Unblock Student</button>
+                                    </form>
+                                @else
+                                    <span style="color: var(--text-muted);">No action needed</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
+                                No browser tab policy violations have been recorded.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <div>
                 <h2 class="card-title">Student Copy-Paste Permissions Matrix</h2>
                 <p class="card-subtitle">Global ON permits copy-paste on every problem. When global is OFF, turn ON individual problem exceptions.</p>
             </div>

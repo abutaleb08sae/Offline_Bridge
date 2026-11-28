@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - OfflineBridge Master Control Panel</title>
     
     <!-- Local Plain CSS (No CDN / No Build Step) -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ url('css/app.css') }}">
 
     <!-- Script to set initial theme immediately to prevent flash -->
     <script>
@@ -37,7 +38,7 @@
 
         <!-- Navigation Menu -->
         <nav class="sidebar-nav">
-            @php($isAdmin = auth()->check() && auth()->user()->role === 'admin')
+            @php($isAdmin = auth()->check() && auth()->user()->isAdmin())
             <div class="nav-label">Management</div>
 
             <!-- Dashboard -->
@@ -358,6 +359,9 @@
         updateThemeIcon(activeTheme);
     });
 </script>
+
+@include('partials.auth_sync')
+@include('partials.tab_guard')
 
 </body>
 </html>

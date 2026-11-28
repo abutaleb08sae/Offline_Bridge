@@ -169,6 +169,73 @@
         </div>
     </div>
 
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">Browser Tab Policy Violation Security Log</h3>
+                <p class="card-subtitle">Unauthorized browser tab openings, tab switches, and workstation access locks</p>
+            </div>
+        </div>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Violation Type</th>
+                        <th>Page / Details</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                        <th>Block Status</th>
+                        <th>Admin Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($tabViolations ?? collect() as $tabViolation)
+                        <tr>
+                            <td>
+                                {{ $tabViolation->user?->name ?? 'Deleted user' }}
+                                <span style="display: block; color: var(--text-muted);">ID: {{ $tabViolation->user_id }}</span>
+                            </td>
+                            <td>{{ ucwords(str_replace('_', ' ', $tabViolation->violation_type)) }}</td>
+                            <td>
+                                @if($tabViolation->page_url)
+                                    <code style="font-size: var(--font-size-xs);">{{ $tabViolation->page_url }}</code>
+                                @endif
+                                @if($tabViolation->details)
+                                    <span style="display: block; font-size: var(--font-size-xs); color: var(--text-muted);">{{ $tabViolation->details }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $tabViolation->ip_address ?? 'Unknown' }}</td>
+                            <td>{{ $tabViolation->created_at->format('Y-m-d H:i:s') }}</td>
+                            <td>
+                                @if($tabViolation->is_blocked)
+                                    <span class="badge badge-danger">Blocked</span>
+                                @else
+                                    <span class="badge badge-neutral">Unblocked</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($tabViolation->is_blocked)
+                                    <form action="{{ route('admin.tab-violations.unblock', $tabViolation) }}" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-secondary">Unblock Student</button>
+                                    </form>
+                                @else
+                                    <span style="color: var(--text-muted);">Access restored</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">No browser tab violations recorded.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <!-- Real-time Polling & Filter Logic (Zero External Dependencies) -->

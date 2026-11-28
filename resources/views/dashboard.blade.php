@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @php
-    $isAdmin = isset($isAdmin) ? $isAdmin : (auth()->check() && auth()->user()->role === 'admin');
+    $isAdmin = isset($isAdmin) ? $isAdmin : (auth()->check() && auth()->user()->isAdmin());
 @endphp
 
 @section('title', $isAdmin ? 'Master Dashboard Overview' : 'Student Lab Workspace')
@@ -456,6 +456,17 @@
 @else
 {{-- STUDENT LAB WORKSPACE: HOW TO GET A FILE, SOLVE A PROBLEM, AND SUBMIT IT --}}
 <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+
+    @if(auth()->check() && auth()->user()->isTabBlocked())
+    <div class="card" role="alert" style="background: var(--color-danger-bg); border-color: var(--color-danger-text); padding: var(--space-4);">
+        <div style="display: flex; align-items: center; gap: var(--space-3);">
+            <span class="badge badge-danger">ACCESS BLOCKED</span>
+            <div style="color: var(--color-danger-text); font-size: var(--font-size-sm);">
+                <strong>Browser Tab Policy Violation:</strong> Your access to Lab Tasks, File Downloads, Submissions, and the Local Judge is locked. Contact your lab administrator to unblock your account.
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Student Welcome & Workstation Banner -->
     <div class="card" style="padding: var(--space-6); background: linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(247, 241, 230, 0.92)); border-color: rgba(13, 92, 94, 0.25);">

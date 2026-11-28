@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Submit Lab Solution - OfflineBridge Client Portal</title>
     
     <!-- 100% Local Offline Stylesheet (Zero-CDN Architecture) -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ url('css/app.css') }}">
 
     <script>
         (function() {
@@ -285,5 +286,7 @@
             return true;
         }
     </script>
+    @include('partials.auth_sync')
+    @include('partials.tab_guard')
 </body>
 </html>

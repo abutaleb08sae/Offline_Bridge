@@ -44,7 +44,7 @@
         </div>
     @endif
 
-    @if(auth()->check() && auth()->user()->role === 'admin')
+    @if(auth()->check() && auth()->user()->isAdmin())
     <!-- Instructor Upload Card -->
     <div class="card">
         <div class="card-header">
@@ -164,7 +164,7 @@
                 <h4 style="font-size: var(--font-size-base); font-weight: 700; color: var(--text-main); margin-bottom: var(--space-1);">
                     No Lab Tasks Uploaded Yet
                 </h4>
-                @if(auth()->check() && auth()->user()->role === 'admin')
+                @if(auth()->check() && auth()->user()->isAdmin())
                     <p style="font-size: var(--font-size-xs); color: var(--text-muted); max-width: 480px; margin: 0 auto var(--space-4);">
                         No tasks uploaded yet. Uploaded assignment packages and files will appear here for management and student access.
                     </p>
@@ -179,7 +179,7 @@
                 <table class="table" id="labTasksTable">
                     <thead>
                         <tr>
-                            @if(auth()->check() && auth()->user()->role === 'admin')
+                            @if(auth()->check() && auth()->user()->isAdmin())
                                 <th style="width: 40px;">#</th>
                                 <th>Task Title & Instructions</th>
                                 <th>File Name & Type</th>
@@ -189,7 +189,7 @@
                                 <th>File Name</th>
                             @endif
                             <th>Uploaded At</th>
-                            <th style="text-align: right; width: 180px;">{{ auth()->check() && auth()->user()->role === 'admin' ? 'Actions' : 'Action' }}</th>
+                            <th style="text-align: right; width: 180px;">{{ auth()->check() && auth()->user()->isAdmin() ? 'Actions' : 'Action' }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -198,7 +198,7 @@
                                 $ext = strtolower(pathinfo($task->file_name, PATHINFO_EXTENSION));
                             @endphp
                             <tr class="lab-task-row">
-                                @if(auth()->check() && auth()->user()->role === 'admin')
+                                @if(auth()->check() && auth()->user()->isAdmin())
                                     <td style="color: var(--text-muted); font-size: var(--font-size-xs);">
                                         {{ $index + 1 }}
                                     </td>
@@ -207,7 +207,7 @@
                                     <div class="task-title-text" style="font-weight: 700; color: var(--text-main); margin-bottom: 0.15rem;">
                                         {{ $task->title }}
                                     </div>
-                                    @if(auth()->check() && auth()->user()->role === 'admin')
+                                    @if(auth()->check() && auth()->user()->isAdmin())
                                         @if($task->description)
                                             <div style="font-size: var(--font-size-xs); color: var(--text-muted); line-height: 1.35; max-width: 400px; margin-bottom: 0.25rem;">
                                                 {{ $task->description }}
@@ -236,7 +236,7 @@
                                         </span>
                                     </div>
                                 </td>
-                                @if(auth()->check() && auth()->user()->role === 'admin')
+                                @if(auth()->check() && auth()->user()->isAdmin())
                                     <td style="font-size: var(--font-size-xs); font-family: monospace; color: var(--text-muted);">
                                         {{ $task->formatted_file_size }}
                                     </td>
@@ -255,7 +255,7 @@
                                             <span>Download</span>
                                         </a>
 
-                                        @if(auth()->check() && auth()->user()->role === 'admin')
+                                        @if(auth()->check() && auth()->user()->isAdmin())
                                         <!-- Batch Download Submissions (.zip) Button -->
                                         <a href="{{ route('admin.tasks.downloadAll', $task->id) }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.65rem; font-size: var(--font-size-xs); text-decoration: none;" title="Download All Student Submissions (.zip)">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -291,7 +291,7 @@
 </div>
 
 <!-- Interactive Client-side Script (Zero External Dependencies) -->
-@if(auth()->check() && auth()->user()->role === 'admin')
+@if(auth()->check() && auth()->user()->isAdmin())
 <script>
     // Drag & Drop handlers for dropzone
     const dropzoneBox = document.getElementById('dropzoneBox');
