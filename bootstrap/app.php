@@ -13,10 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'not.tab_blocked' => \App\Http\Middleware\EnsureNotTabBlocked::class,
         ]);
 
         $middleware->web(append: [
             \App\Http\Middleware\TrackClientActivity::class,
+            \App\Http\Middleware\PreventStaleAuthCache::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
